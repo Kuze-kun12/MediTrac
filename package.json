@@ -1,0 +1,25 @@
+{
+  "name": "meditrac",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [
+    "final"
+  ],
+  "homepage": "https://github.com/Kuze-kun12/MediTrac#readme",
+  "bugs": {
+    "url": "https://github.com/Kuze-kun12/MediTrac/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kuze-kun12/MediTrac.git"
+  },
+  "author": "Group 4 section b",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "dev"
+  },
+  "dependencies": {
+    "express": "^5.3.0"
+  }
+}
