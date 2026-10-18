@@ -15,8 +15,9 @@
   },
   "author": "Group 4 section b",
   "type": "commonjs",
-  "main": "index.js",
+  "main": "backend/server.js",
   "scripts": {
+    "start": "node backend/server.js",
     "test": "dev"
   },
   "dependencies": {
