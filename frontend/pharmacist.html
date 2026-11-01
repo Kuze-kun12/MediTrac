@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediTrac Pharmacist</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-box">+</div>
+      <div>
+        <h1 class="brand-title">MediTrac</h1>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="location.href='/'">Log out</button>
+  </header>
+
+  <main class="page-shell">
+    <div class="warning-box">
+      <h3>Warnings</h3>
+      <ul class="warning-list" id="warningList"></ul>
+    </div>
+
+    <div class="panel">
+      <div class="top-row">
+        <h2>Medicine Inventory</h2>
+        <input id="searchBox" class="search" type="text" placeholder="Search medicine..." />
+      </div>
+
+      <table class="health-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Medicine</th>
+            <th>Category</th>
+            <th>Batch</th>
+            <th>Qty</th>
+            <th>Expiry</th>
+            <th>Reorder</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    const tableBody = document.getElementById('tableBody');
+    const warningList = document.getElementById('warningList');
+    const searchBox = document.getElementById('searchBox');
+
+    async function loadWarnings() {
+      const res = await fetch('/api/alerts');
+      const data = await res.json();
+      const alerts = data.alerts || [];
+
+      warningList.innerHTML = alerts.length
+        ? alerts.map(item => '<li class="warning-item"><strong>' + (item.alert_type === 'expired' ? 'Expired' : 'Low Stock') + ':</strong> ' + item.generic_name + ' (' + item.batch_no + ') - Qty: ' + item.qty_on_hand + ' - Expiry: ' + item.expiry_date + '</li>').join('')
+        : '<li class="warning-item"><strong>No warnings.</strong> Everything looks okay.</li>';
+    }
+
+    async function loadMedicines() {
+      const res = await fetch('/api/data');
+      const data = await res.json();
+      const items = Array.isArray(data) ? data : (data.items || []);
+
+      const rows = items.map(item => `
+        <tr>
+          <td>${item.id ?? ''}</td>
+          <td>${item.medName ?? ''}</td>
+          <td>${item.category ?? ''}</td>
+          <td>${item.batchNo ?? ''}</td>
+          <td>${item.qtyOnHand ?? ''}</td>
+          <td>${item.expiry ?? ''}</td>
+          <td>${item.reorderLevel ?? ''}</td>
+        </tr>
+      `).join('');
+
+      tableBody.innerHTML = rows || '<tr><td colspan="7" class="empty">No medicine found.</td></tr>';
+    }
+
+    searchBox.addEventListener('input', async function () {
+      const keyword = searchBox.value.toLowerCase();
+      const res = await fetch('/api/data');
+      const data = await res.json();
+      const items = Array.isArray(data) ? data : (data.items || []);
+
+      const filtered = items.filter(item => {
+        const text = [item.medName, item.category, item.batchNo].join(' ').toLowerCase();
+        return text.includes(keyword);
+      });
+
+      tableBody.innerHTML = filtered.map(item => `
+        <tr>
+          <td>${item.id ?? ''}</td>
+          <td>${item.medName ?? ''}</td>
+          <td>${item.category ?? ''}</td>
+          <td>${item.batchNo ?? ''}</td>
+          <td>${item.qtyOnHand ?? ''}</td>
+          <td>${item.expiry ?? ''}</td>
+          <td>${item.reorderLevel ?? ''}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="7" class="empty">No medicine found.</td></tr>';
+    });
+
+    loadWarnings();
+    loadMedicines();
+  </script>
+</body>
+</html>
