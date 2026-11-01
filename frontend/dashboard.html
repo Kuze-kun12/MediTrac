@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediTrac Admin Panel</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">+</div>
+      <div>
+        <h1>MediTrac</h1>
+        <p>Admin Panel</p>
+      </div>
+    </div>
+
+    <div class="user-box">
+      <div class="avatar">A</div>
+      <div>
+        <strong>Admin User</strong>
+        <span class="role">Administrator</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="menu">
+    <div class="nav">
+      <div class="nav-group">
+        <span class="nav-title">Medicine</span>
+        <button class="nav-btn active">Inventory</button>
+        <button class="nav-btn">Alerts</button>
+      </div>
+      <div class="nav-group">
+        <span class="nav-title">Account</span>
+        <button class="nav-btn">Users</button>
+        <button class="nav-btn">Reports</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="page">
+    <div class="page-head">
+      <div>
+        <h2>Medicine Inventory</h2>
+        <p class="help">Track stock levels and update medicine records.</p>
+      </div>
+
+      <div class="toolbar">
+        <input id="searchBox" class="search" type="text" placeholder="Search medicine..." />
+        <button id="addBtn" class="btn green">Add Medicine</button>
+      </div>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <div class="form-card" id="formCard" style="display:none;">
+      <h3>Add New Medicine</h3>
+      <p class="hint">Fill in the medicine details below.</p>
+
+      <form id="medicineForm">
+        <div class="form-grid">
+          <div>
+            <label for="medName">Medicine Name</label>
+            <input id="medName" name="medName" type="text" required>
+          </div>
+
+          <div>
+            <label for="category">Category</label>
+            <input id="category" name="category" type="text" required>
+          </div>
+
+          <div>
+            <label for="batchNo">Batch No</label>
+            <input id="batchNo" name="batchNo" type="text" required>
+          </div>
+
+          <div>
+            <label for="qtyOnHand">Quantity on Hand</label>
+            <input id="qtyOnHand" name="qtyOnHand" type="number" min="0" required>
+          </div>
+
+          <div>
+            <label for="expiry">Expiry Date</label>
+            <input id="expiry" name="expiry" type="date" required>
+          </div>
+
+          <div>
+            <label for="reorderLevel">Reorder Level</label>
+            <input id="reorderLevel" name="reorderLevel" type="number" min="0" required>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn" type="submit">Save</button>
+          <button class="btn gray outline" type="button" id="cancelBtn">Cancel</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="alert-box">
+      <h3>Inventory Alerts</h3>
+      <ul class="alert-list" id="alertList"></ul>
+    </div>
+
+    <div class="table-card">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Medicine</th>
+              <th>Category</th>
+              <th>Batch</th>
+              <th>Qty</th>
+              <th>Expiry</th>
+              <th>Reorder</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div class="table-footer" id="tableFooter">0 medicines</div>
+    </div>
+  </main>
+
+  <script>
+    const tableBody = document.getElementById('tableBody');
+    const alertList = document.getElementById('alertList');
+    const searchBox = document.getElementById('searchBox');
+    const msg = document.getElementById('msg');
+    const formCard = document.getElementById('formCard');
+    const addBtn = document.getElementById('addBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const medicineForm = document.getElementById('medicineForm');
+    const tableFooter = document.getElementById('tableFooter');
+
+    function showMessage(text, type = 'error') {
+      msg.textContent = text;
+      msg.className = 'msg show ' + type;
+    }
+
+    function hideMessage() {
+      msg.textContent = '';
+      msg.className = 'msg';
+    }
+
+    function showForm() {
+      formCard.style.display = 'block';
+      medicineForm.reset();
+      hideMessage();
+    }
+
+    function hideForm() {
+      formCard.style.display = 'none';
+      medicineForm.reset();
+      hideMessage();
+    }
+
+    addBtn.addEventListener('click', showForm);
+    cancelBtn.addEventListener('click', hideForm);
+
+    medicineForm.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const payload = {
+        medName: document.getElementById('medName').value.trim(),
+        category: document.getElementById('category').value.trim(),
+        batchNo: document.getElementById('batchNo').value.trim(),
+        qtyOnHand: Number(document.getElementById('qtyOnHand').value),
+        expiry: document.getElementById('expiry').value,
+        reorderLevel: Number(document.getElementById('reorderLevel').value)
+      };
+
+      if (!payload.medName || !payload.category || !payload.batchNo || !payload.expiry || isNaN(payload.qtyOnHand) || isNaN(payload.reorderLevel)) {
+        showMessage('Please fill in all fields correctly.', 'error');
+        return;
+      }
+
+      const res = await fetch('/api/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMessage(data.message || 'Unable to add medicine.', 'error');
+        return;
+      }
+
+      showMessage('Medicine added successfully.', 'ok');
+      hideForm();
+      loadMedicines();
+    });
+
+    async function loadAlerts() {
+      const res = await fetch('/api/alerts');
+      const data = await res.json();
+      const alerts = data.alerts || [];
+
+      alertList.innerHTML = alerts.length
+        ? alerts.map(item => '<li class="alert-item"><strong>' + (item.alert_type === 'expired' ? 'Expired' : 'Low Stock') + ':</strong> ' + item.generic_name + ' (' + item.batch_no + ') - Qty: ' + item.qty_on_hand + ' - Expiry: ' + item.expiry_date + '</li>').join('')
+        : '<li class="alert-item"><strong>No alerts.</strong> Everything looks okay.</li>';
+    }
+
+    async function loadMedicines() {
+      const res = await fetch('/api/data');
+      const data = await res.json();
+      const items = Array.isArray(data) ? data : (data.items || []);
+
+      tableFooter.textContent = items.length + ' medicines';
+
+      tableBody.innerHTML = items.length
+        ? items.map(item => `
+          <tr>
+            <td>${item.id ?? ''}</td>
+            <td>${item.medName ?? ''}</td>
+            <td>${item.category ?? ''}</td>
+            <td>${item.batchNo ?? ''}</td>
+            <td>${item.qtyOnHand ?? ''}</td>
+            <td>${item.expiry ?? ''}</td>
+            <td>${item.reorderLevel ?? ''}</td>
+            <td class="actions">
+              <button class="btn red small" data-id="${item.id ?? ''}" data-action="delete">Delete</button>
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="8" class="empty">No medicine found.</td></tr>';
+
+      document.querySelectorAll('[data-action="delete"]').forEach(button => {
+        button.addEventListener('click', async function () {
+          const id = this.dataset.id;
+          if (!id) return;
+
+          const res = await fetch('/api/data/' + id, { method: 'DELETE' });
+          const data = await res.json();
+
+          if (!res.ok) {
+            showMessage(data.message || 'Unable to delete medicine.', 'error');
+            return;
+          }
+
+          showMessage('Medicine deleted successfully.', 'ok');
+          loadMedicines();
+          loadAlerts();
+        });
+      });
+    }
+
+    searchBox.addEventListener('input', async function () {
+      const keyword = searchBox.value.toLowerCase();
+      const res = await fetch('/api/data');
+      const data = await res.json();
+      const items = Array.isArray(data) ? data : (data.items || []);
+
+      const filtered = items.filter(item => {
+        const text = [item.medName, item.category, item.batchNo].join(' ').toLowerCase();
+        return text.includes(keyword);
+      });
+
+      tableBody.innerHTML = filtered.length
+        ? filtered.map(item => `
+          <tr>
+            <td>${item.id ?? ''}</td>
+            <td>${item.medName ?? ''}</td>
+            <td>${item.category ?? ''}</td>
+            <td>${item.batchNo ?? ''}</td>
+            <td>${item.qtyOnHand ?? ''}</td>
+            <td>${item.expiry ?? ''}</td>
+            <td>${item.reorderLevel ?? ''}</td>
+            <td class="actions">
+              <button class="btn red small" data-id="${item.id ?? ''}" data-action="delete">Delete</button>
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="8" class="empty">No medicine found.</td></tr>';
+
+      document.querySelectorAll('[data-action="delete"]').forEach(button => {
+        button.addEventListener('click', async function () {
+          const id = this.dataset.id;
+          if (!id) return;
+
+          const res = await fetch('/api/data/' + id, { method: 'DELETE' });
+          const data = await res.json();
+
+          if (!res.ok) {
+            showMessage(data.message || 'Unable to delete medicine.', 'error');
+            return;
+          }
+
+          showMessage('Medicine deleted successfully.', 'ok');
+          loadMedicines();
+          loadAlerts();
+        });
+      });
+    });
+
+    loadAlerts();
+    loadMedicines();
+  </script>
+</body>
+</html>
