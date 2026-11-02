@@ -4,6 +4,7 @@ const {
   getFefoOrder,
   getAllPatients,
   addMedicine,
+  addPatient,
   getUserByLogin,
 } = require('../models/medicineModel');
 const { ok, bad } = require('../utils/response');
@@ -110,6 +111,27 @@ async function createMedicine(req, res) {
   }
 }
 
+// POST = add new patient
+async function createPatient(req, res) {
+  const payload = normalizePatientPayload(req.body);
+  const required = ['full_name', 'birthdate', 'purok'];
+  const missing = required.filter((field) => {
+    const value = payload[field];
+    return value === undefined || value === null || value === '';
+  });
+
+  if (missing.length > 0) {
+    return bad(res, 'Please fill all required patient fields.', 400);
+  }
+
+  try {
+    await addPatient(payload);
+    return ok(res, { message: 'Patient added successfully.' }, 201);
+  } catch (error) {
+    console.error('Create patient error:', error);
+    return bad(res, error.message || 'Could not add patient.');
+  }
+}
 module.exports = {
   getMedicines,
   getMedicineAlerts,
@@ -117,4 +139,5 @@ module.exports = {
   getPatients,
   loginUser,
   createMedicine,
+  createPatient,
 };
