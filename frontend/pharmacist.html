@@ -18,95 +18,128 @@
   </header>
 
   <main class="page-shell">
-    <div class="warning-box">
-      <h3>Warnings</h3>
-      <ul class="warning-list" id="warningList"></ul>
-    </div>
+    <section class="simple-box">
+      <h2>Barangay Health Center Record</h2>
+      <p class="small-text">Simple dispensing log. Pick the center, pick the medicine batch, then save.</p>
 
-    <div class="panel">
-      <div class="top-row">
-        <h2>Medicine Inventory</h2>
-        <input id="searchBox" class="search" type="text" placeholder="Search medicine..." />
+      <div class="dispense-form">
+        <label>
+          Barangay Health Center
+          <select id="stationSelect">
+            <option value="">Select center</option>
+          </select>
+        </label>
+
+        <label>
+          Medicine & Batch
+          <select id="batchSelect">
+            <option value="">Select medicine batch</option>
+          </select>
+        </label>
+
+        <label>
+          Quantity
+          <input id="qtyInput" type="number" min="1" value="1" />
+        </label>
+
+        <label>
+          For / Note
+          <input id="patientName" type="text" placeholder="Barangay distribution" />
+        </label>
+
+        <button id="saveBtn" class="primary-btn">Save to Record Log</button>
+        <div id="saveMessage" class="msg-box"></div>
       </div>
+    </section>
 
-      <table class="health-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Medicine</th>
-            <th>Category</th>
-            <th>Batch</th>
-            <th>Qty</th>
-            <th>Expiry</th>
-            <th>Reorder</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-    </div>
+    <section class="simple-box">
+      <h3>Dispensing Record Log</h3>
+      <div id="recordLog" class="record-log"></div>
+    </section>
   </main>
 
   <script>
-    const tableBody = document.getElementById('tableBody');
-    const warningList = document.getElementById('warningList');
-    const searchBox = document.getElementById('searchBox');
+    const stationSelect = document.getElementById('stationSelect');
+    const batchSelect = document.getElementById('batchSelect');
+    const qtyInput = document.getElementById('qtyInput');
+    const patientName = document.getElementById('patientName');
+    const saveBtn = document.getElementById('saveBtn');
+    const saveMessage = document.getElementById('saveMessage');
+    const recordLog = document.getElementById('recordLog');
 
-    async function loadWarnings() {
-      const res = await fetch('/api/alerts');
-      const data = await res.json();
-      const alerts = data.alerts || [];
-
-      warningList.innerHTML = alerts.length
-        ? alerts.map(item => '<li class="warning-item"><strong>' + (item.alert_type === 'expired' ? 'Expired' : 'Low Stock') + ':</strong> ' + item.generic_name + ' (' + item.batch_no + ') - Qty: ' + item.qty_on_hand + ' - Expiry: ' + item.expiry_date + '</li>').join('')
-        : '<li class="warning-item"><strong>No warnings.</strong> Everything looks okay.</li>';
+    function setMessage(text, isError = false) {
+      saveMessage.textContent = text;
+      saveMessage.className = 'msg-box ' + (isError ? 'error' : 'ok');
     }
 
-    async function loadMedicines() {
-      const res = await fetch('/api/data');
+    async function loadDispensingOptions() {
+      const res = await fetch('/api/dispensing-options');
       const data = await res.json();
-      const items = Array.isArray(data) ? data : (data.items || []);
+      const stations = data.stations || data.items || [];
+      const batches = data.batches || [];
 
-      const rows = items.map(item => `
-        <tr>
-          <td>${item.id ?? ''}</td>
-          <td>${item.medName ?? ''}</td>
-          <td>${item.category ?? ''}</td>
-          <td>${item.batchNo ?? ''}</td>
-          <td>${item.qtyOnHand ?? ''}</td>
-          <td>${item.expiry ?? ''}</td>
-          <td>${item.reorderLevel ?? ''}</td>
-        </tr>
-      `).join('');
+      stationSelect.innerHTML = '<option value="">Select center</option>' +
+        stations.map(item => `<option value="${item.id}">${item.name}</option>`).join('');
 
-      tableBody.innerHTML = rows || '<tr><td colspan="7" class="empty">No medicine found.</td></tr>';
+      batchSelect.innerHTML = '<option value="">Select medicine batch</option>' +
+        batches.map(item => `<option value="${item.id}">${item.medName} (${item.batchNo}) - Qty: ${item.qtyOnHand}</option>`).join('');
     }
 
-    searchBox.addEventListener('input', async function () {
-      const keyword = searchBox.value.toLowerCase();
-      const res = await fetch('/api/data');
+    async function loadRecordLog() {
+      const res = await fetch('/api/dispensing-records');
       const data = await res.json();
-      const items = Array.isArray(data) ? data : (data.items || []);
+      const items = data.items || [];
 
-      const filtered = items.filter(item => {
-        const text = [item.medName, item.category, item.batchNo].join(' ').toLowerCase();
-        return text.includes(keyword);
-      });
+      recordLog.innerHTML = items.length
+        ? items.map(item => `
+            <div class="record-item">
+              <div>
+                <strong>${item.barangay || 'Center'}</strong>
+                <span>${item.medName || ''} (${item.batchNo || ''})</span>
+              </div>
+              <div class="qty-box">${item.qty || 0}</div>
+            </div>
+          `).join('')
+        : '<p class="empty-small">No saved record yet.</p>';
+    }
 
-      tableBody.innerHTML = filtered.map(item => `
-        <tr>
-          <td>${item.id ?? ''}</td>
-          <td>${item.medName ?? ''}</td>
-          <td>${item.category ?? ''}</td>
-          <td>${item.batchNo ?? ''}</td>
-          <td>${item.qtyOnHand ?? ''}</td>
-          <td>${item.expiry ?? ''}</td>
-          <td>${item.reorderLevel ?? ''}</td>
-        </tr>
-      `).join('') || '<tr><td colspan="7" class="empty">No medicine found.</td></tr>';
+    saveBtn.addEventListener('click', async function () {
+      const payload = {
+        station_id: stationSelect.value,
+        batch_id: batchSelect.value,
+        qty: qtyInput.value,
+        patient_name: patientName.value,
+      };
+
+      if (!payload.station_id || !payload.batch_id) {
+        setMessage('Please choose a barangay health center and medicine batch.', true);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/dispensing-records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to save record');
+        }
+
+        setMessage('Saved successfully to the dispensing record log.');
+        qtyInput.value = '1';
+        patientName.value = '';
+        await loadRecordLog();
+      } catch (error) {
+        setMessage(error.message || 'Something went wrong.', true);
+      }
     });
 
-    loadWarnings();
-    loadMedicines();
+    loadDispensingOptions();
+    loadRecordLog();
   </script>
 </body>
 </html>

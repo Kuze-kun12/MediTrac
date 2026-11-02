@@ -28,6 +28,131 @@ function getAllMedicines() {
   return db.query(sql).then(([rows]) => rows);
 }
 
+function getAllHealthStations() {
+  const sql = `
+    SELECT
+      station_id AS id,
+      station_name AS name
+    FROM health_stations
+    ORDER BY station_name
+  `;
+
+  return db.query(sql).then(([rows]) => rows);
+}
+
+function getAvailableMedicineBatches() {
+  const sql = `
+    SELECT
+      mb.batch_id AS id,
+      mb.batch_no AS batchNo,
+      m.medicine_id AS medicineId,
+      m.generic_name AS medName,
+      m.strength,
+      m.dosage_form AS dosageForm,
+      m.unit,
+      mb.qty_on_hand AS qtyOnHand,
+      mb.expiry_date AS expiry,
+      hs.station_name AS barangay
+    FROM medicine_batches mb
+    JOIN medicines m ON m.medicine_id = mb.medicine_id
+    LEFT JOIN health_stations hs ON hs.station_id = mb.station_id
+    WHERE mb.qty_on_hand > 0
+    ORDER BY m.generic_name, mb.expiry_date ASC
+  `;
+
+  return db.query(sql).then(([rows]) => rows);
+}
+
+function getDispensingLog() {
+  const sql = `
+    SELECT
+      dr.dispense_id AS id,
+      hs.station_name AS barangay,
+      m.generic_name AS medName,
+      mb.batch_no AS batchNo,
+      di.qty,
+      dr.dispensed_at AS dispensedAt
+    FROM dispensing_records dr
+    JOIN dispensing_items di ON di.dispense_id = dr.dispense_id
+    JOIN medicine_batches mb ON mb.batch_id = di.batch_id
+    JOIN medicines m ON m.medicine_id = di.medicine_id
+    LEFT JOIN health_stations hs ON hs.station_id = dr.station_id
+    ORDER BY dr.dispensed_at DESC
+    LIMIT 20
+  `;
+
+  return db.query(sql).then(([rows]) => rows);
+}
+
+async function getFirstUserId() {
+  const [rows] = await db.query('SELECT user_id FROM users ORDER BY user_id LIMIT 1');
+  return rows[0]?.user_id || 1;
+}
+
+async function addDispensingRecord({ station_id, batch_id, qty, user_id, patient_name }) {
+  const stationId = Number(station_id);
+  const batchId = Number(batch_id);
+  const quantity = Number(qty);
+
+  if (!stationId || !batchId || !quantity || quantity <= 0) {
+    throw new Error('Please pick a barangay health center, batch, and valid quantity.');
+  }
+
+  const [[batchRow]] = await db.query(
+    `SELECT
+      mb.batch_id,
+      mb.batch_no,
+      mb.qty_on_hand,
+      mb.medicine_id,
+      m.generic_name,
+      hs.station_name
+    FROM medicine_batches mb
+    JOIN medicines m ON m.medicine_id = mb.medicine_id
+    LEFT JOIN health_stations hs ON hs.station_id = mb.station_id
+    WHERE mb.batch_id = ?`,
+    [batchId]
+  );
+
+  if (!batchRow) {
+    throw new Error('Selected batch was not found.');
+  }
+
+  if (batchRow.qty_on_hand < quantity) {
+    throw new Error(`Only ${batchRow.qty_on_hand} left in ${batchRow.batch_no}.`);
+  }
+
+  const patientName = String(patient_name || 'Barangay Distribution').trim() || 'Barangay Distribution';
+  const fallbackUserId = Number(user_id) || (await getFirstUserId());
+
+  const [patientResult] = await db.query(
+    'INSERT INTO patients (full_name, birthdate, purok, contact) VALUES (?, ?, ?, ?)',
+    [patientName, '2000-01-01', 'Distribution', 'N/A']
+  );
+
+  const [recordResult] = await db.query(
+    'INSERT INTO dispensing_records (patient_id, user_id, station_id) VALUES (?, ?, ?)',
+    [patientResult.insertId, fallbackUserId, stationId]
+  );
+
+  await db.query(
+    'INSERT INTO dispensing_items (dispense_id, batch_id, medicine_id, qty) VALUES (?, ?, ?, ?)',
+    [recordResult.insertId, batchId, batchRow.medicine_id, quantity]
+  );
+
+  await db.query(
+    'UPDATE medicine_batches SET qty_on_hand = qty_on_hand - ? WHERE batch_id = ?',
+    [quantity, batchId]
+  );
+
+  return {
+    dispenseId: recordResult.insertId,
+    medicine: batchRow.generic_name,
+    batchNo: batchRow.batch_no,
+    qty: quantity,
+    station: batchRow.station_name || 'Health Center',
+  };
+}
+
 //create function to get alerts from the database
 function getAlerts() {
   const sql = `
@@ -141,7 +266,7 @@ function getMedicineFullOuterJoinSimulated() {
 }
 
 async function getOrCreateRow(table, fieldName, value, insertSql, insertValues) {
-  const [rows] = await db.query(`SELECT * FROM ${table} WHERE ${fieldName} = ?, [value]`);
+  const [rows] = await db.query(`SELECT * FROM ${table} WHERE ${fieldName} = ?`, [value]);
 
   if (rows.length > 0) {
     return rows[0].id || rows[0][Object.keys(rows[0])[0]];
@@ -198,7 +323,6 @@ async function addMedicine(data) {
       Number(categoryId),
     ]
   );
-
 
 // Insert the batch for the newly created medicine
   await db.query(
@@ -409,4 +533,8 @@ module.exports = {
   getMedicinesWithCategory,
   getMedicinesWithMissingBatch,
   getMedicineFullOuterJoinSimulated,
+  getAllHealthStations,
+  getAvailableMedicineBatches,
+  getDispensingLog,
+  addDispensingRecord,
 };

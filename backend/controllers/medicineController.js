@@ -7,6 +7,10 @@ const {
   addPatient,
   getUserByLogin,
   getMedicinesWithCategory,
+  getAllHealthStations,
+  getAvailableMedicineBatches,
+  getDispensingLog,
+  addDispensingRecord,
 } = require('../models/medicineModel');
 const { ok, bad } = require('../utils/response');
 
@@ -34,6 +38,16 @@ function normalizePatientPayload(body = {}) {
     birthdate: body.birthdate ?? '',
     purok: body.purok ?? '',
     contact: body.contact ?? '',
+  };
+}
+
+function normalizeDispensingPayload(body = {}) {
+  return {
+    station_id: body.station_id ?? body.stationId ?? body.barangay_id ?? '',
+    batch_id: body.batch_id ?? body.batchId ?? '',
+    qty: body.qty ?? body.quantity ?? 1,
+    patient_name: body.patient_name ?? body.patientName ?? body.dispensed_to ?? '',
+    user_id: body.user_id ?? body.userId ?? '',
   };
 }
 
@@ -78,6 +92,43 @@ async function getPatients(req, res) {
   } catch (error) {
     console.error('Get patients error:', error);
     return bad(res, 'Could not load patients.');
+  }
+}
+
+// GET = read list of health stations
+async function getHealthStations(req, res) {
+  try {
+    const rows = await getAllHealthStations();
+    return ok(res, { items: rows });
+  } catch (error) {
+    console.error('Get health stations error:', error);
+    return bad(res, 'Could not load barangay health centers.');
+  }
+}
+
+// GET = read dispensing options
+async function getDispensingOptions(req, res) {
+  try {
+    const [stations, batches] = await Promise.all([
+      getAllHealthStations(),
+      getAvailableMedicineBatches(),
+    ]);
+
+    return ok(res, { stations, batches });
+  } catch (error) {
+    console.error('Get dispensing options error:', error);
+    return bad(res, 'Could not load dispensing options.');
+  }
+}
+
+// GET = read dispensing records
+async function getDispensingRecords(req, res) {
+  try {
+    const rows = await getDispensingLog();
+    return ok(res, { items: rows });
+  } catch (error) {
+    console.error('Get dispensing log error:', error);
+    return bad(res, 'Could not load dispensing record log.');
   }
 }
 
@@ -161,6 +212,28 @@ async function createPatient(req, res) {
   }
 }
 
+// POST = save dispensing record
+async function createDispensingRecord(req, res) {
+  const payload = normalizeDispensingPayload(req.body);
+  const required = ['station_id', 'batch_id', 'qty'];
+  const missing = required.filter((field) => {
+    const value = payload[field];
+    return value === undefined || value === null || value === '' || Number(value) <= 0;
+  });
+
+  if (missing.length > 0) {
+    return bad(res, 'Please choose a barangay health center, medicine batch, and quantity.', 400);
+  }
+
+  try {
+    const result = await addDispensingRecord(payload);
+    return ok(res, { message: 'Dispensing record saved.', item: result }, 201);
+  } catch (error) {
+    console.error('Create dispensing error:', error);
+    return bad(res, error.message || 'Could not save dispensing record.');
+  }
+}
+
 async function getJoinedMedicines(req, res) {
   try {
     const rows = await getMedicinesWithCategory();
@@ -180,4 +253,8 @@ module.exports = {
   createMedicine,
   createPatient,
   getJoinedMedicines,
+  getHealthStations,
+  getDispensingOptions,
+  getDispensingRecords,
+  createDispensingRecord,
 };
