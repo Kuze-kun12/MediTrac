@@ -159,7 +159,181 @@ async function addMedicine(data) {
 }
 
 
+//create function to update medicine in the database
+async function updateMedicine(id, data) {
+  const categoryName = data.category_name || 'General';
+  const categoryId = await getOrCreateRow(
+    'medicine_categories',
+    'category_name',
+    categoryName,
+    'INSERT INTO medicine_categories (category_name) VALUES (?)',
+    [categoryName]
+  );
 
+// Update the medicine record
+  await db.query(
+    `UPDATE medicines
+     SET generic_name = ?, strength = ?, dosage_form = ?, unit = ?, reorder_level = ?, category_id = ?
+     WHERE medicine_id = ?`,
+    [
+      String(data.generic_name).trim(),
+      String(data.strength).trim(),
+      String(data.dosage_form).trim(),
+      String(data.unit).trim(),
+      Number(data.reorder_level),
+      Number(categoryId),
+      Number(id),
+    ]
+  );
+
+// Update or insert the batch record
+  const supplierName = data.supplier_name || 'MedPharma Global';
+  const barangayName = String(data.barangay || data.station_name || 'Central Health Center').trim() || 'Central Health Center';
+  const stationName = barangayName;
+
+  const supplierId = await getOrCreateRow(
+    'suppliers',
+    'supplier_name',
+    supplierName,
+    'INSERT INTO suppliers (supplier_name, contact) VALUES (?, ?)',
+    [supplierName, 'N/A']
+  );
+
+// Get or create station ID
+  const stationId = await getOrCreateRow(
+    'health_stations',
+    'station_name',
+    stationName,
+    'INSERT INTO health_stations (station_name, address) VALUES (?, ?)',
+    [stationName, 'N/A']
+  );
+
+
+// Get the latest batch for the medicine
+  const [batchRows] = await db.query(
+    'SELECT * FROM medicine_batches WHERE medicine_id = ? ORDER BY batch_id DESC LIMIT 1',
+    [Number(id)]
+  );
+
+//
+  const batchNo = data.batch_no ? String(data.batch_no).trim() : (batchRows[0]?.batch_no || 'BATCH-NEW');
+  const expiryDate = data.expiry_date || (batchRows[0]?.expiry_date || '2027-12-31');
+  const qty = Number(data.qty_on_hand || batchRows[0]?.qty_on_hand || 0);
+
+  if (batchRows.length > 0) {
+    await db.query(
+      `UPDATE medicine_batches
+       SET batch_no = ?, expiry_date = ?, qty_on_hand = ?, supplier_id = ?, station_id = ?
+       WHERE batch_id = ?`,
+      [batchNo, expiryDate, qty, Number(supplierId), Number(stationId), batchRows[0].batch_id]
+    );
+  } else {
+    await db.query(
+      'INSERT INTO medicine_batches (batch_no, medicine_id, supplier_id, station_id, expiry_date, qty_on_hand, unit_cost, received_date) VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE())',
+      [
+        batchNo,
+        Number(id),
+        Number(supplierId),
+        Number(stationId),
+        expiryDate,
+        qty,
+        Number(data.unit_cost || 0),
+      ]
+    );
+  }
+
+  return { success: true };
+}
+
+async function deleteMedicine(id) {
+  const conn = await db.getConnection();
+
+  try {
+    await conn.beginTransaction();
+
+    await conn.query('DELETE FROM medicine_batches WHERE medicine_id = ?', [Number(id)]);
+    await conn.query('DELETE FROM medicines WHERE medicine_id = ?', [Number(id)]);
+
+    const [[medicineMax]] = await conn.query('SELECT COALESCE(MAX(medicine_id), 0) AS max_id FROM medicines');
+    const nextMedicineId = Math.max(1, Number(medicineMax.max_id) + 1);
+    await conn.query('ALTER TABLE medicines AUTO_INCREMENT = ?', [nextMedicineId]);
+
+    const [[batchMax]] = await conn.query('SELECT COALESCE(MAX(batch_id), 0) AS max_id FROM medicine_batches');
+    const nextBatchId = Math.max(1, Number(batchMax.max_id) + 1);
+    await conn.query('ALTER TABLE medicine_batches AUTO_INCREMENT = ?', [nextBatchId]);
+
+    await conn.commit();
+    return { success: true };
+  } catch (error) {
+    await conn.rollback();
+    throw error;
+  } finally {
+    conn.release();
+  }
+}
+
+function getAllPatients() {
+  const sql = `
+    SELECT
+      patient_id AS id,
+      full_name AS fullName,
+      birthdate,
+      purok,
+      contact
+    FROM patients
+    ORDER BY patient_id
+  `;
+
+  return db.query(sql).then(([rows]) => rows);
+}
+
+async function addPatient(data) {
+  const fullName = String(data.full_name || data.fullName || '').trim();
+  const birthdate = data.birthdate || '';
+  const purok = String(data.purok || '').trim();
+  const contact = String(data.contact || '').trim();
+
+  if (!fullName || !birthdate || !purok) {
+    throw new Error('Patient name, birthdate and purok are required.');
+  }
+
+  const [result] = await db.query(
+    'INSERT INTO patients (full_name, birthdate, purok, contact) VALUES (?, ?, ?, ?)',
+    [fullName, birthdate, purok, contact]
+  );
+
+  return { success: true, id: result.insertId };
+}
+
+async function updatePatient(id, data) {
+  const fullName = String(data.full_name || data.fullName || '').trim();
+  const birthdate = data.birthdate || '';
+  const purok = String(data.purok || '').trim();
+  const contact = String(data.contact || '').trim();
+
+  if (!fullName || !birthdate || !purok) {
+    throw new Error('Patient name, birthdate and purok are required.');
+  }
+
+  await db.query(
+    `UPDATE patients
+     SET full_name = ?, birthdate = ?, purok = ?, contact = ?
+     WHERE patient_id = ?`,
+    [fullName, birthdate, purok, contact, Number(id)]
+  );
+
+  return { success: true };
+}
+
+async function deletePatient(id) {
+  await db.query('DELETE FROM patients WHERE patient_id = ?', [Number(id)]);
+
+  const [[maxRow]] = await db.query('SELECT COALESCE(MAX(patient_id), 0) AS max_id FROM patients');
+  const nextId = Math.max(1, Number(maxRow.max_id) + 1);
+  await db.query('ALTER TABLE patients AUTO_INCREMENT = ?', [nextId]);
+
+  return { success: true };
+}
 
 module.exports = {
   getAllMedicines,
@@ -167,4 +341,10 @@ module.exports = {
   getFefoOrder,
   getUserByLogin,
   addMedicine,
+  updateMedicine,
+  deleteMedicine,
+  getAllPatients,
+  addPatient,
+  updatePatient,
+  deletePatient,
 };
