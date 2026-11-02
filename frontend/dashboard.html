@@ -90,6 +90,36 @@
             <label for="reorderLevel">Reorder Level</label>
             <input id="reorderLevel" name="reorderLevel" type="number" min="0" required>
           </div>
+
+          <div>
+            <label for="strength">Strength</label>
+            <input id="strength" name="strength" type="text" value="N/A">
+          </div>
+
+          <div>
+            <label for="dosageForm">Dosage Form</label>
+            <input id="dosageForm" name="dosageForm" type="text" value="Tablet">
+          </div>
+
+          <div>
+            <label for="unit">Unit</label>
+            <input id="unit" name="unit" type="text" value="pcs">
+          </div>
+
+          <div>
+            <label for="barangay">Barangay</label>
+            <input id="barangay" name="barangay" type="text" value="Central Health Center">
+          </div>
+
+          <div>
+            <label for="supplier">Supplier</label>
+            <input id="supplier" name="supplier" type="text" value="MedPharma Global">
+          </div>
+
+          <div>
+            <label for="unitCost">Unit Cost</label>
+            <input id="unitCost" name="unitCost" type="number" value="0">
+          </div>
         </div>
 
         <div class="form-actions">
@@ -149,12 +179,20 @@
 
     function showForm() {
       formCard.style.display = 'block';
+      formCard.dataset.mode = 'add';
+      formCard.dataset.editId = '';
+      document.querySelector('#formCard h3').textContent = 'Add New Medicine';
+      document.querySelector('#medicineForm button[type="submit"]').textContent = 'Save';
       medicineForm.reset();
       hideMessage();
     }
 
     function hideForm() {
       formCard.style.display = 'none';
+      formCard.dataset.mode = 'add';
+      formCard.dataset.editId = '';
+      document.querySelector('#formCard h3').textContent = 'Add New Medicine';
+      document.querySelector('#medicineForm button[type="submit"]').textContent = 'Save';
       medicineForm.reset();
       hideMessage();
     }
@@ -171,7 +209,13 @@
         batchNo: document.getElementById('batchNo').value.trim(),
         qtyOnHand: Number(document.getElementById('qtyOnHand').value),
         expiry: document.getElementById('expiry').value,
-        reorderLevel: Number(document.getElementById('reorderLevel').value)
+        reorderLevel: Number(document.getElementById('reorderLevel').value),
+        strength: 'N/A',
+        dosageForm: 'Tablet',
+        unit: 'pcs',
+        barangay: 'Central Health Center',
+        supplier: 'MedPharma Global',
+        unitCost: 0,
       };
 
       if (!payload.medName || !payload.category || !payload.batchNo || !payload.expiry || isNaN(payload.qtyOnHand) || isNaN(payload.reorderLevel)) {
@@ -179,8 +223,12 @@
         return;
       }
 
-      const res = await fetch('/api/data', {
-        method: 'POST',
+      const mode = formCard.dataset.mode === 'edit' ? 'PUT' : 'POST';
+      const id = formCard.dataset.editId;
+      const url = mode === 'PUT' ? '/api/data/' + id : '/api/data';
+
+      const res = await fetch(url, {
+        method: mode,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
@@ -188,13 +236,14 @@
       const data = await res.json();
 
       if (!res.ok) {
-        showMessage(data.message || 'Unable to add medicine.', 'error');
+        showMessage(data.message || 'Unable to save medicine.', 'error');
         return;
       }
 
-      showMessage('Medicine added successfully.', 'ok');
+      showMessage(mode === 'PUT' ? 'Medicine updated successfully.' : 'Medicine added successfully.', 'ok');
       hideForm();
       loadMedicines();
+      loadAlerts();
     });
 
     async function loadAlerts() {
@@ -225,11 +274,33 @@
             <td>${item.expiry ?? ''}</td>
             <td>${item.reorderLevel ?? ''}</td>
             <td class="actions">
+              <button class="btn outline small" data-id="${item.id ?? ''}" data-action="edit">Edit</button>
               <button class="btn red small" data-id="${item.id ?? ''}" data-action="delete">Delete</button>
             </td>
           </tr>
         `).join('')
         : '<tr><td colspan="8" class="empty">No medicine found.</td></tr>';
+
+      document.querySelectorAll('[data-action="edit"]').forEach(button => {
+        button.addEventListener('click', function () {
+          const id = this.dataset.id;
+          const item = items.find(row => String(row.id) === String(id));
+          if (!item) return;
+
+          formCard.style.display = 'block';
+          document.getElementById('medName').value = item.medName || '';
+          document.getElementById('category').value = item.category || '';
+          document.getElementById('batchNo').value = item.batchNo || '';
+          document.getElementById('qtyOnHand').value = item.qtyOnHand || 0;
+          document.getElementById('expiry').value = item.expiry || '';
+          document.getElementById('reorderLevel').value = item.reorderLevel || 0;
+
+          formCard.dataset.mode = 'edit';
+          formCard.dataset.editId = id;
+          document.querySelector('#formCard h3').textContent = 'Edit Medicine';
+          document.querySelector('#medicineForm button[type="submit"]').textContent = 'Update';
+        });
+      });
 
       document.querySelectorAll('[data-action="delete"]').forEach(button => {
         button.addEventListener('click', async function () {
@@ -273,11 +344,33 @@
             <td>${item.expiry ?? ''}</td>
             <td>${item.reorderLevel ?? ''}</td>
             <td class="actions">
+              <button class="btn outline small" data-id="${item.id ?? ''}" data-action="edit">Edit</button>
               <button class="btn red small" data-id="${item.id ?? ''}" data-action="delete">Delete</button>
             </td>
           </tr>
         `).join('')
         : '<tr><td colspan="8" class="empty">No medicine found.</td></tr>';
+
+      document.querySelectorAll('[data-action="edit"]').forEach(button => {
+        button.addEventListener('click', function () {
+          const id = this.dataset.id;
+          const item = filtered.find(row => String(row.id) === String(id));
+          if (!item) return;
+
+          formCard.style.display = 'block';
+          document.getElementById('medName').value = item.medName || '';
+          document.getElementById('category').value = item.category || '';
+          document.getElementById('batchNo').value = item.batchNo || '';
+          document.getElementById('qtyOnHand').value = item.qtyOnHand || 0;
+          document.getElementById('expiry').value = item.expiry || '';
+          document.getElementById('reorderLevel').value = item.reorderLevel || 0;
+
+          formCard.dataset.mode = 'edit';
+          formCard.dataset.editId = id;
+          document.querySelector('#formCard h3').textContent = 'Edit Medicine';
+          document.querySelector('#medicineForm button[type="submit"]').textContent = 'Update';
+        });
+      });
 
       document.querySelectorAll('[data-action="delete"]').forEach(button => {
         button.addEventListener('click', async function () {

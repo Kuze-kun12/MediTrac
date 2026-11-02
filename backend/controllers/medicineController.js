@@ -11,23 +11,24 @@ const {
   getAvailableMedicineBatches,
   getDispensingLog,
   addDispensingRecord,
+  updateMedicine,
+  deleteMedicine,
 } = require('../models/medicineModel');
 const { ok, bad } = require('../utils/response');
 
 function normalizeMedicinePayload(body = {}) {
   return {
-    generic_name: 
-    body.generic_name ?? body.medName ?? body.name ?? '',
-    strength: body.strength ?? '',
-    dosage_form: body.dosage_form ?? body.dosageForm ?? '',
-    unit: body.unit ?? '',
-    barangay: body.barangay ?? body.station_name ?? body.stationName ?? '',
+    generic_name: body.generic_name ?? body.medName ?? body.name ?? '',
+    strength: body.strength ?? 'N/A',
+    dosage_form: body.dosage_form ?? body.dosageForm ?? 'Tablet',
+    unit: body.unit ?? 'pcs',
+    barangay: body.barangay ?? body.station_name ?? body.stationName ?? 'Central Health Center',
     reorder_level: body.reorder_level ?? body.reorderLevel ?? 0,
     batch_no: body.batch_no ?? body.batchNo ?? '',
     expiry_date: body.expiry_date ?? body.expiry ?? '',
     qty_on_hand: body.qty_on_hand ?? body.qtyOnHand ?? 0,
-    category_name: body.category_name ?? body.category ?? '',
-    supplier_name: body.supplier_name ?? body.supplier ?? '',
+    category_name: body.category_name ?? body.category ?? 'General',
+    supplier_name: body.supplier_name ?? body.supplier ?? 'MedPharma Global',
     unit_cost: body.unit_cost ?? body.unitCost ?? 0,
   };
 }
@@ -170,7 +171,7 @@ async function loginUser(req, res) {
 // POST = add new medicine
 async function createMedicine(req, res) {
   const payload = normalizeMedicinePayload(req.body);
-  const required = ['generic_name', 'strength', 'dosage_form', 'unit', 'barangay', 'reorder_level', 'batch_no', 'expiry_date', 'qty_on_hand'];
+  const required = ['generic_name', 'batch_no', 'expiry_date', 'qty_on_hand'];
 
   const missing = required.filter((field) => {
     const value = payload[field];
@@ -186,7 +187,7 @@ async function createMedicine(req, res) {
     return ok(res, { message: 'Medicine added successfully.' }, 201);
   } catch (error) {
     console.error('Create medicine error:', error);
-    return bad(res, 'Could not add medicine.');
+    return bad(res, error.message || 'Could not add medicine.');
   }
 }
 
@@ -244,6 +245,51 @@ async function getJoinedMedicines(req, res) {
   }
 }
 
+// PUT = update medicine
+async function updateMedicineRecord(req, res) {
+  const medicineId = Number(req.params.id);
+  const payload = normalizeMedicinePayload(req.body);
+
+  if (!medicineId || Number.isNaN(medicineId)) {
+    return bad(res, 'Medicine ID is missing.', 400);
+  }
+
+  const required = ['generic_name', 'strength', 'dosage_form', 'unit', 'barangay', 'reorder_level', 'batch_no', 'expiry_date', 'qty_on_hand'];
+  const missing = required.filter((field) => {
+    const value = payload[field];
+    return value === undefined || value === null || value === '' || (typeof value === 'number' && Number.isNaN(value));
+  });
+
+  if (missing.length > 0) {
+    return bad(res, 'Please fill all required medicine fields.', 400);
+  }
+
+  try {
+    await updateMedicine(medicineId, payload);
+    return ok(res, { message: 'Medicine updated successfully.' });
+  } catch (error) {
+    console.error('Update medicine error:', error);
+    return bad(res, error.message || 'Could not update medicine.');
+  }
+}
+
+// DELETE = remove medicine
+async function deleteMedicineRecord(req, res) {
+  const medicineId = Number(req.params.id);
+
+  if (!medicineId || Number.isNaN(medicineId)) {
+    return bad(res, 'Medicine ID is missing.', 400);
+  }
+
+  try {
+    await deleteMedicine(medicineId);
+    return ok(res, { message: 'Medicine removed successfully.' });
+  } catch (error) {
+    console.error('Delete medicine error:', error);
+    return bad(res, error.message || 'Could not remove medicine.');
+  }
+}
+
 module.exports = {
   getMedicines,
   getMedicineAlerts,
@@ -257,4 +303,6 @@ module.exports = {
   getDispensingOptions,
   getDispensingRecords,
   createDispensingRecord,
+  updateMedicineRecord,
+  deleteMedicineRecord,
 };
