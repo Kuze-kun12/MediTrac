@@ -27,3 +27,23 @@ function getAllMedicines() {
 
   return db.query(sql).then(([rows]) => rows);
 }
+
+//create function to get alerts from the database
+function getAlerts() {
+  const sql = `
+    SELECT
+      b.batch_id,
+      b.batch_no,
+      m.generic_name,
+      b.expiry_date,
+      b.qty_on_hand,
+      m.reorder_level
+    FROM medicine_batches b
+    JOIN medicines m ON m.medicine_id = b.medicine_id
+    WHERE b.expiry_date < CURDATE()
+       OR b.qty_on_hand <= m.reorder_level
+    ORDER BY b.expiry_date ASC, b.qty_on_hand ASC
+  `;
+
+  return db.query(sql).then(([rows]) => rows);
+}
