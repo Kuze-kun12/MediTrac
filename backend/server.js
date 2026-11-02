@@ -25,6 +25,9 @@ app.get('/dashboard.html', (req, res) => {
   res.sendFile(path.join(frontendDir, 'dashboard.html'));
 });
 
+app.get('/healthworker.html', (req, res) => {
+  res.sendFile(path.join(frontendDir, 'healthworker.html'));
+});
 
 app.listen(PORT, () => {
   console.log("Server running at http://localhost:${PORT}");
