@@ -6,12 +6,14 @@ const {
   addMedicine,
   addPatient,
   getUserByLogin,
+  getMedicinesWithCategory,
 } = require('../models/medicineModel');
 const { ok, bad } = require('../utils/response');
 
 function normalizeMedicinePayload(body = {}) {
   return {
-    generic_name: body.generic_name ?? body.medName ?? body.name ?? '',
+    generic_name: 
+    body.generic_name ?? body.medName ?? body.name ?? '',
     strength: body.strength ?? '',
     dosage_form: body.dosage_form ?? body.dosageForm ?? '',
     unit: body.unit ?? '',
@@ -159,6 +161,16 @@ async function createPatient(req, res) {
   }
 }
 
+async function getJoinedMedicines(req, res) {
+  try {
+    const rows = await getMedicinesWithCategory();
+    return ok(res, { items: rows });
+  } catch (error) {
+    console.error('Get joined medicines error:', error);
+    return bad(res, 'Could not load joined medicine data.');
+  }
+}
+
 module.exports = {
   getMedicines,
   getMedicineAlerts,
@@ -167,4 +179,5 @@ module.exports = {
   loginUser,
   createMedicine,
   createPatient,
+  getJoinedMedicines,
 };

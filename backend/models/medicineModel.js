@@ -80,6 +80,65 @@ function getUserByLogin(username, password) {
   return db.query(sql, [username, password]).then(([rows]) => rows);
 }
 
+function getMedicinesWithCategory() {
+  const sql = `
+    SELECT
+      m.medicine_id AS medicine_id,
+      m.generic_name,
+      m.strength,
+      c.category_name AS category
+    FROM medicines m
+    INNER JOIN medicine_categories c
+      ON c.category_id = m.category_id
+    ORDER BY m.medicine_id
+  `;
+
+  return db.query(sql).then(([rows]) => rows);
+}
+
+function getMedicinesWithMissingBatch() {
+  const sql = `
+    SELECT
+      m.medicine_id,
+      m.generic_name,
+      b.batch_id,
+      b.batch_no
+    FROM medicines m
+    LEFT JOIN medicine_batches b
+      ON b.medicine_id = m.medicine_id
+    WHERE b.batch_id IS NULL
+    ORDER BY m.medicine_id
+  `;
+
+  return db.query(sql).then(([rows]) => rows);
+}
+
+function getMedicineFullOuterJoinSimulated() {
+  const sql = `
+    SELECT
+      m.medicine_id,
+      m.generic_name,
+      b.batch_no,
+      b.expiry_date
+    FROM medicines m
+    LEFT JOIN medicine_batches b
+      ON b.medicine_id = m.medicine_id
+
+    UNION
+
+    SELECT
+      m.medicine_id,
+      m.generic_name,
+      b.batch_no,
+      b.expiry_date
+    FROM medicines m
+    RIGHT JOIN medicine_batches b
+      ON b.medicine_id = m.medicine_id
+    ORDER BY medicine_id, batch_no
+  `;
+
+  return db.query(sql).then(([rows]) => rows);
+}
 
 async function getOrCreateRow(table, fieldName, value, insertSql, insertValues) {
   const [rows] = await db.query(`SELECT * FROM ${table} WHERE ${fieldName} = ?, [value]`);
@@ -347,4 +406,7 @@ module.exports = {
   addPatient,
   updatePatient,
   deletePatient,
+  getMedicinesWithCategory,
+  getMedicinesWithMissingBatch,
+  getMedicineFullOuterJoinSimulated,
 };
