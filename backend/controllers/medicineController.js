@@ -9,6 +9,32 @@ const {
 } = require('../models/medicineModel');
 const { ok, bad } = require('../utils/response');
 
+function normalizeMedicinePayload(body = {}) {
+  return {
+    generic_name: body.generic_name ?? body.medName ?? body.name ?? '',
+    strength: body.strength ?? '',
+    dosage_form: body.dosage_form ?? body.dosageForm ?? '',
+    unit: body.unit ?? '',
+    barangay: body.barangay ?? body.station_name ?? body.stationName ?? '',
+    reorder_level: body.reorder_level ?? body.reorderLevel ?? 0,
+    batch_no: body.batch_no ?? body.batchNo ?? '',
+    expiry_date: body.expiry_date ?? body.expiry ?? '',
+    qty_on_hand: body.qty_on_hand ?? body.qtyOnHand ?? 0,
+    category_name: body.category_name ?? body.category ?? '',
+    supplier_name: body.supplier_name ?? body.supplier ?? '',
+    unit_cost: body.unit_cost ?? body.unitCost ?? 0,
+  };
+}
+
+function normalizePatientPayload(body = {}) {
+  return {
+    full_name: body.full_name ?? body.fullName ?? '',
+    birthdate: body.birthdate ?? '',
+    purok: body.purok ?? '',
+    contact: body.contact ?? '',
+  };
+}
+
 // GET = read list of medicines
 async function getMedicines(req, res) {
   try {
@@ -132,6 +158,7 @@ async function createPatient(req, res) {
     return bad(res, error.message || 'Could not add patient.');
   }
 }
+
 module.exports = {
   getMedicines,
   getMedicineAlerts,
