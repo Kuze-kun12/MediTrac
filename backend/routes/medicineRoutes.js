@@ -1,10 +1,13 @@
- const express = require('express');
+const express = require('express');
 const router = express.Router();
 const {
   getMedicines,
   getMedicineAlerts,
   getFefo,
   getPatients,
+  loginUser,
+  createMedicine,
+  createPatient,
 } = require('../controllers/medicineController');
 
 // HTTP GET - Read operations
@@ -17,8 +20,6 @@ router.get('/api/patients', getPatients);       // GET /api/patients -> get all 
 router.post('/login', loginUser);               // POST /login -> user login
 router.post('/api/medicines', createMedicine);  // POST /api/medicines -> add medicine
 router.post('/api/patients', createPatient);    // POST /api/patients -> add patient
-
-
 
 module.exports = router;
 
