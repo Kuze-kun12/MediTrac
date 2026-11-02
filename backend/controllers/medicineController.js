@@ -1,8 +1,12 @@
 const {
   getAllMedicines,
   getAlerts,
+  getUserByLogin,
+  getFefoOrder,
+  getAllPatients,
 } = require('../models/medicineModel');
 const { ok, bad } = require('../utils/response');
+
 
 // GET = read list of medicines
 async function getMedicines(req, res) {
@@ -37,9 +41,21 @@ async function getFefo(req, res) {
   }
 }
 
+// GET = read list of patients
+async function getPatients(req, res) {
+  try {
+    const rows = await getAllPatients();
+    return ok(res, { items: rows });
+  } catch (error) {
+    console.error('Get patients error:', error);
+    return bad(res, 'Could not load patients.');
+  }
+}
 
 module.exports = {
   getMedicines,
   getMedicineAlerts,
-};
+  getFefo,
+  getPatients,
 
+};
