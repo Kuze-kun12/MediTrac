@@ -29,6 +29,10 @@ app.get('/healthworker.html', (req, res) => {
   res.sendFile(path.join(frontendDir, 'healthworker.html'));
 });
 
+app.get('/pharmacist.html', (req, res) => {
+  res.sendFile(path.join(frontendDir, 'pharmacist.html'));
+});
+
 app.listen(PORT, () => {
   console.log("Server running at http://localhost:${PORT}");
 });
