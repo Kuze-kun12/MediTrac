@@ -47,3 +47,23 @@ function getAlerts() {
 
   return db.query(sql).then(([rows]) => rows);
 }
+
+//create function to get FEFO order from the database
+function getFefoOrder() {
+  const sql = `
+    SELECT
+      m.medicine_id,
+      m.generic_name,
+      b.batch_id,
+      b.batch_no,
+      b.expiry_date,
+      b.qty_on_hand,
+      m.reorder_level
+    FROM medicine_batches b
+    JOIN medicines m ON m.medicine_id = b.medicine_id
+    WHERE b.qty_on_hand > 0
+    ORDER BY b.expiry_date ASC
+  `;
+
+  return db.query(sql).then(([rows]) => rows);
+}
