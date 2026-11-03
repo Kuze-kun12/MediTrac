@@ -251,9 +251,20 @@
       const data = await res.json();
       const alerts = data.alerts || [];
 
-      alertList.innerHTML = alerts.length
-        ? alerts.map(item => '<li class="alert-item"><strong>' + (item.alert_type === 'expired' ? 'Expired' : 'Low Stock') + ':</strong> ' + item.generic_name + ' (' + item.batch_no + ') - Qty: ' + item.qty_on_hand + ' - Expiry: ' + item.expiry_date + '</li>').join('')
-        : '<li class="alert-item"><strong>No alerts.</strong> Everything looks okay.</li>';
+      if (alerts.length === 0) {
+        alertList.innerHTML = '<li class="alert-item"><strong>No alerts.</strong> Everything looks okay.</li>';
+        return;
+      }
+
+      alertList.innerHTML = alerts.map(item => {
+        let type = 'Low Stock';
+
+        if (new Date(item.expiry_date) < new Date()) {
+          type = 'Expired';
+        }
+
+        return '<li class="alert-item"><strong>' + type + ':</strong> ' + item.generic_name + ' (' + item.batch_no + ') - Qty: ' + item.qty_on_hand + ' - Expiry: ' + item.expiry_date + '</li>';
+      }).join('');
     }
 
     async function loadMedicines() {
