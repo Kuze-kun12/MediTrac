@@ -67,3 +67,104 @@ function getFefoOrder() {
 
   return db.query(sql).then(([rows]) => rows);
 }
+
+//create function to get user by login from the database
+function getUserByLogin(username, password) {
+  const sql = `
+    SELECT u.*, r.role_name
+    FROM users u
+    LEFT JOIN roles r ON r.role_id = u.role_id
+    WHERE u.username = ? AND u.password_hash = ?
+  `;
+
+  return db.query(sql, [username, password]).then(([rows]) => rows);
+}
+
+
+async function getOrCreateRow(table, fieldName, value, insertSql, insertValues) {
+  const [rows] = await db.query(`SELECT * FROM ${table} WHERE ${fieldName} = ?, [value]`);
+
+  if (rows.length > 0) {
+    return rows[0].id || rows[0][Object.keys(rows[0])[0]];
+  }
+
+  const [result] = await db.query(insertSql, insertValues);
+  return result.insertId;
+}
+
+//create function to add medicine to the database
+async function addMedicine(data) {
+  const categoryName = data.category_name || 'General';
+  const supplierName = data.supplier_name || 'MedPharma Global';
+  const barangayName = String(data.barangay || data.station_name || 'Central Health Center').trim() || 'Central Health Center';
+  const stationName = barangayName;
+
+// Get or create category, supplier, and station IDs
+  const categoryId = await getOrCreateRow(
+    'medicine_categories',
+    'category_name',
+    categoryName,
+    'INSERT INTO medicine_categories (category_name) VALUES (?)',
+    [categoryName]
+  );
+
+
+// Get or create supplier and station IDs
+  const supplierId = await getOrCreateRow(
+    'suppliers',
+    'supplier_name',
+    supplierName,
+    'INSERT INTO suppliers (supplier_name, contact) VALUES (?, ?)',
+    [supplierName, 'N/A']
+  );
+
+// Get or create station ID
+  const stationId = await getOrCreateRow(
+    'health_stations',
+    'station_name',
+    stationName,
+    'INSERT INTO health_stations (station_name, address) VALUES (?, ?)',
+    [stationName, 'N/A']
+  );
+
+// Insert the medicine and its batch into the database
+  const [medicineResult] = await db.query(
+    'INSERT INTO medicines (generic_name, strength, dosage_form, unit, reorder_level, category_id) VALUES (?, ?, ?, ?, ?, ?)',
+    [
+      String(data.generic_name).trim(),
+      String(data.strength).trim(),
+      String(data.dosage_form).trim(),
+      String(data.unit).trim(),
+      Number(data.reorder_level),
+      Number(categoryId),
+    ]
+  );
+
+
+// Insert the batch for the newly created medicine
+  await db.query(
+    'INSERT INTO medicine_batches (batch_no, medicine_id, supplier_id, station_id, expiry_date, qty_on_hand, unit_cost, received_date) VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE())',
+    [
+      String(data.batch_no).trim(),
+      medicineResult.insertId,
+      Number(supplierId),
+      Number(stationId),
+      data.expiry_date,
+      Number(data.qty_on_hand),
+      Number(data.unit_cost || 0),
+    ]
+  );
+
+  return { success: true };
+}
+
+
+
+
+module.exports = {
+  getAllMedicines,
+  getAlerts,
+  getFefoOrder,
+  getUserByLogin,
+  addMedicine,
+};
