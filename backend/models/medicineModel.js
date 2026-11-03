@@ -429,13 +429,28 @@ async function updateMedicine(id, data) {
 }
 
 async function deleteMedicine(id) {
+  const medicineId = Number(id);
   const conn = await db.getConnection();
 
   try {
     await conn.beginTransaction();
 
-    await conn.query('DELETE FROM medicine_batches WHERE medicine_id = ?', [Number(id)]);
-    await conn.query('DELETE FROM medicines WHERE medicine_id = ?', [Number(id)]);
+    const [batchRows] = await conn.query('SELECT batch_id FROM medicine_batches WHERE medicine_id = ?', [medicineId]);
+    const batchIds = batchRows.map((row) => row.batch_id);
+
+    if (batchIds.length > 0) {
+      const batchPlaceholders = batchIds.map(() => '?').join(', ');
+
+      await conn.query(`DELETE FROM dispensing_items WHERE batch_id IN (${batchPlaceholders})`, batchIds);
+      await conn.query(`DELETE FROM alerts WHERE batch_id IN (${batchPlaceholders})`, batchIds);
+      await conn.query(`DELETE FROM stock_movements WHERE batch_id IN (${batchPlaceholders})`, batchIds);
+    }
+
+    await conn.query('DELETE FROM dispensing_items WHERE medicine_id = ?', [medicineId]);
+    await conn.query('DELETE FROM alerts WHERE medicine_id = ?', [medicineId]);
+    await conn.query('DELETE FROM purchase_order_items WHERE medicine_id = ?', [medicineId]);
+    await conn.query('DELETE FROM medicine_batches WHERE medicine_id = ?', [medicineId]);
+    await conn.query('DELETE FROM medicines WHERE medicine_id = ?', [medicineId]);
 
     const [[medicineMax]] = await conn.query('SELECT COALESCE(MAX(medicine_id), 0) AS max_id FROM medicines');
     const nextMedicineId = Math.max(1, Number(medicineMax.max_id) + 1);
@@ -510,11 +525,6 @@ async function updatePatient(id, data) {
 
 async function deletePatient(id) {
   await db.query('DELETE FROM patients WHERE patient_id = ?', [Number(id)]);
-
-  const [[maxRow]] = await db.query('SELECT COALESCE(MAX(patient_id), 0) AS max_id FROM patients');
-  const nextId = Math.max(1, Number(maxRow.max_id) + 1);
-  await db.query('ALTER TABLE patients AUTO_INCREMENT = ?', [nextId]);
-
   return { success: true };
 }
 
