@@ -1,10 +1,11 @@
+
 create table roles(
     role_id int auto_increment primary key,
     role_name varchar(255) not null unique
 );
 
 
-CREATE TABLE station_health (
+CREATE TABLE health_stations (
     station_id INT PRIMARY KEY AUTO_INCREMENT,
     station_name VARCHAR(100) NOT NULL,
     address VARCHAR(255) NOT NULL
@@ -19,7 +20,7 @@ CREATE TABLE users (
     station_id INT,
     
     FOREIGN KEY (role_id) REFERENCES roles(role_id),
-    FOREIGN KEY (station_id) REFERENCES station_health(station_id)
+    FOREIGN KEY (station_id) REFERENCES health_stations(station_id)
 );
 
 
@@ -60,7 +61,7 @@ CREATE TABLE medicine_batches (
     received_date DATE NOT NULL,
     FOREIGN KEY (medicine_id) REFERENCES medicines(medicine_id),
     FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id),
-    FOREIGN KEY (station_id) REFERENCES station_health(station_id)
+    FOREIGN KEY (station_id) REFERENCES health_stations(station_id)
 );
 
 
@@ -97,7 +98,7 @@ CREATE TABLE dispensing_records (
     dispensed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (station_id) REFERENCES station_health(station_id)
+    FOREIGN KEY (station_id) REFERENCES health_stations(station_id)
 );
 
 

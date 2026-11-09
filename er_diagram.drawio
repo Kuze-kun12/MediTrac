@@ -1,130 +1,112 @@
-<mxfile host="app.diagrams.net" modified="2026-11-03T05:38:00.000Z" agent="Claude" version="24.0.0" type="device">
-  <diagram id="er-medicine-inventory" name="ER Diagram">
-    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1000" math="0" shadow="0">
-      <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
-
-        <!-- ENTITIES -->
-        <mxCell id="roles" value="roles&#xa;role_id  PK&#xa;role_name  UNIQUE" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="40" y="40" width="240" height="74" as="geometry" />
-        </mxCell>
-
-        <mxCell id="users" value="users&#xa;user_id  PK&#xa;username  UNIQUE&#xa;password_hash&#xa;full_name&#xa;role_id  FK&#xa;station_id  FK" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="320" y="40" width="240" height="146" as="geometry" />
-        </mxCell>
-
-        <mxCell id="health_stations" value="health_stations&#xa;station_id  PK&#xa;station_name&#xa;address" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="640" y="40" width="240" height="92" as="geometry" />
-        </mxCell>
-
-        <mxCell id="medicine_categories" value="medicine_categories&#xa;category_id  PK&#xa;category_name  UNIQUE" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="960" y="40" width="240" height="74" as="geometry" />
-        </mxCell>
-
-        <mxCell id="suppliers" value="suppliers&#xa;supplier_id  PK&#xa;supplier_name&#xa;contact" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="1280" y="40" width="240" height="74" as="geometry" />
-        </mxCell>
-
-        <mxCell id="purchase_orders" value="purchase_orders&#xa;po_id  PK&#xa;po_date&#xa;total_amount" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="40" y="260" width="240" height="92" as="geometry" />
-        </mxCell>
-
-        <mxCell id="purchase_order_items" value="purchase_order_items&#xa;po_item_id  PK&#xa;po_id  FK&#xa;medicine_id  FK&#xa;qty_ordered&#xa;qty_received" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="320" y="260" width="240" height="128" as="geometry" />
-        </mxCell>
-
-        <mxCell id="medicine_batches" value="medicine_batches&#xa;batch_id  PK&#xa;batch_no&#xa;medicine_id  FK&#xa;supplier_id  FK&#xa;station_id  FK&#xa;expiry_date&#xa;qty_on_hand&#xa;unit_cost&#xa;received_date" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="640" y="260" width="240" height="200" as="geometry" />
-        </mxCell>
-
-        <mxCell id="medicines" value="medicines&#xa;medicine_id  PK&#xa;generic_name&#xa;strength&#xa;dosage_form&#xa;unit&#xa;reorder_level&#xa;category_id  FK" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="960" y="260" width="240" height="164" as="geometry" />
-        </mxCell>
-
-        <mxCell id="alerts" value="alerts&#xa;alert_id  PK&#xa;alert_type&#xa;medicine_id  FK&#xa;batch_id  FK&#xa;created_at&#xa;resolved_at" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="1280" y="260" width="240" height="146" as="geometry" />
-        </mxCell>
-
-        <mxCell id="patients" value="patients&#xa;patient_id  PK&#xa;full_name&#xa;birthdate&#xa;purok&#xa;contact" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="40" y="480" width="240" height="128" as="geometry" />
-        </mxCell>
-
-        <mxCell id="dispensing_records" value="dispensing_records&#xa;dispense_id  PK&#xa;patient_id  FK&#xa;user_id  FK&#xa;station_id  FK&#xa;dispensed_at" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="320" y="480" width="240" height="128" as="geometry" />
-        </mxCell>
-
-        <mxCell id="dispensing_items" value="dispensing_items&#xa;dispense_item_id  PK&#xa;dispense_id  FK&#xa;batch_id  FK&#xa;medicine_id  FK&#xa;qty" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="640" y="520" width="240" height="128" as="geometry" />
-        </mxCell>
-
-        <mxCell id="adjustment_reasons" value="adjustment_reasons&#xa;reason_id  PK&#xa;reason_text  UNIQUE" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="40" y="700" width="240" height="74" as="geometry" />
-        </mxCell>
-
-        <mxCell id="stock_movements" value="stock_movements&#xa;movement_id  PK&#xa;batch_id  FK&#xa;user_id  FK&#xa;reason_id  FK&#xa;movement_type&#xa;qty&#xa;moved_at" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="320" y="720" width="240" height="164" as="geometry" />
-        </mxCell>
-
-        <!-- RELATIONSHIPS (FK → PK) -->
-        <mxCell id="r1" value="role_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="users" target="roles">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r2" value="station_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="users" target="health_stations">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r3" value="category_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="medicines" target="medicine_categories">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r4" value="medicine_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="medicine_batches" target="medicines">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r5" value="supplier_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="medicine_batches" target="suppliers">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r6" value="station_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="medicine_batches" target="health_stations">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r7" value="po_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="purchase_order_items" target="purchase_orders">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r8" value="medicine_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="purchase_order_items" target="medicines">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r9" value="patient_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="dispensing_records" target="patients">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r10" value="user_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="dispensing_records" target="users">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r11" value="station_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="dispensing_records" target="health_stations">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r12" value="dispense_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="dispensing_items" target="dispensing_records">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r13" value="batch_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="dispensing_items" target="medicine_batches">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r14" value="medicine_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="dispensing_items" target="medicines">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r15" value="batch_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="stock_movements" target="medicine_batches">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r16" value="user_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="stock_movements" target="users">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r17" value="reason_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="stock_movements" target="adjustment_reasons">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r18" value="medicine_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="alerts" target="medicines">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="r19" value="batch_id" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" edge="1" parent="1" source="alerts" target="medicine_batches">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-      </root>
-    </mxGraphModel>
-  </diagram>
+<mxfile host="65bd71144e">
+    <diagram id="er-medicine-inventory" name="ER Diagram">
+        <mxGraphModel dx="764" dy="569" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="roles" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="roles&#xa;role_id  PK&#xa;role_name  UNIQUE" vertex="1">
+                    <mxGeometry height="74" width="240" x="40" y="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="users" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="users&#xa;user_id  PK&#xa;username  UNIQUE&#xa;password_hash&#xa;full_name&#xa;role_id  FK&#xa;station_id  FK" vertex="1">
+                    <mxGeometry height="146" width="240" x="320" y="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="health_stations" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="health_stations&#xa;station_id  PK&#xa;station_name&#xa;address" vertex="1">
+                    <mxGeometry height="92" width="240" x="640" y="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="medicine_categories" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="medicine_categories&#xa;category_id  PK&#xa;category_name  UNIQUE" vertex="1">
+                    <mxGeometry height="74" width="240" x="960" y="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="suppliers" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="suppliers&#xa;supplier_id  PK&#xa;supplier_name&#xa;contact" vertex="1">
+                    <mxGeometry height="74" width="240" x="1280" y="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="purchase_orders" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="purchase_orders&#xa;po_id  PK&#xa;po_date&#xa;total_amount" vertex="1">
+                    <mxGeometry height="92" width="240" x="40" y="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="purchase_order_items" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="purchase_order_items&#xa;po_item_id  PK&#xa;po_id  FK&#xa;medicine_id  FK&#xa;qty_ordered&#xa;qty_received" vertex="1">
+                    <mxGeometry height="128" width="240" x="320" y="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="medicine_batches" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="medicine_batches&#xa;batch_id  PK&#xa;batch_no&#xa;medicine_id  FK&#xa;supplier_id  FK&#xa;station_id  FK&#xa;expiry_date&#xa;qty_on_hand&#xa;unit_cost&#xa;received_date" vertex="1">
+                    <mxGeometry height="200" width="240" x="640" y="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="medicines" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="medicines&#xa;medicine_id  PK&#xa;generic_name&#xa;strength&#xa;dosage_form&#xa;unit&#xa;reorder_level&#xa;category_id  FK" vertex="1">
+                    <mxGeometry height="164" width="240" x="960" y="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="alerts" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="alerts&#xa;alert_id  PK&#xa;alert_type&#xa;medicine_id  FK&#xa;batch_id  FK&#xa;created_at&#xa;resolved_at" vertex="1">
+                    <mxGeometry height="146" width="240" x="1280" y="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="patients" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="patients&#xa;patient_id  PK&#xa;full_name&#xa;birthdate&#xa;purok&#xa;contact" vertex="1">
+                    <mxGeometry height="128" width="240" x="40" y="480" as="geometry"/>
+                </mxCell>
+                <mxCell id="dispensing_records" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="dispensing_records&#xa;dispense_id  PK&#xa;patient_id  FK&#xa;user_id  FK&#xa;station_id  FK&#xa;dispensed_at" vertex="1">
+                    <mxGeometry height="128" width="240" x="320" y="480" as="geometry"/>
+                </mxCell>
+                <mxCell id="dispensing_items" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="dispensing_items&#xa;dispense_item_id  PK&#xa;dispense_id  FK&#xa;batch_id  FK&#xa;medicine_id  FK&#xa;qty" vertex="1">
+                    <mxGeometry height="128" width="240" x="640" y="588" as="geometry"/>
+                </mxCell>
+                <mxCell id="adjustment_reasons" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="adjustment_reasons&#xa;reason_id  PK&#xa;reason_text  UNIQUE" vertex="1">
+                    <mxGeometry height="74" width="240" x="40" y="700" as="geometry"/>
+                </mxCell>
+                <mxCell id="stock_movements" parent="1" style="rounded=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Courier New;fontSize=12;" value="stock_movements&#xa;movement_id  PK&#xa;batch_id  FK&#xa;user_id  FK&#xa;reason_id  FK&#xa;movement_type&#xa;qty&#xa;moved_at" vertex="1">
+                    <mxGeometry height="164" width="240" x="320" y="720" as="geometry"/>
+                </mxCell>
+                <mxCell id="r1" edge="1" parent="1" source="users" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="roles" value="role_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r2" edge="1" parent="1" source="users" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="health_stations" value="station_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r3" edge="1" parent="1" source="medicines" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="medicine_categories" value="category_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r4" edge="1" parent="1" source="medicine_batches" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="medicines" value="medicine_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r5" edge="1" parent="1" source="medicine_batches" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="suppliers" value="supplier_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r6" edge="1" parent="1" source="medicine_batches" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="health_stations" value="station_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r7" edge="1" parent="1" source="purchase_order_items" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="purchase_orders" value="po_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r8" edge="1" parent="1" source="purchase_order_items" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="medicines" value="medicine_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r9" edge="1" parent="1" source="dispensing_records" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="patients" value="patient_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r10" edge="1" parent="1" source="dispensing_records" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="users" value="user_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r11" edge="1" parent="1" source="dispensing_records" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="health_stations" value="station_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r12" edge="1" parent="1" source="dispensing_items" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="dispensing_records" value="dispense_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r13" edge="1" parent="1" source="dispensing_items" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="medicine_batches" value="batch_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r14" edge="1" parent="1" source="dispensing_items" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="medicines" value="medicine_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r15" edge="1" parent="1" source="stock_movements" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="medicine_batches" value="batch_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r16" edge="1" parent="1" source="stock_movements" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="users" value="user_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r17" edge="1" parent="1" source="stock_movements" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="adjustment_reasons" value="reason_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r18" edge="1" parent="1" source="alerts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="medicines" value="medicine_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="r19" edge="1" parent="1" source="alerts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontFamily=Helvetica;fontSize=11;" target="medicine_batches" value="batch_id">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
 </mxfile>
