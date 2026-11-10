@@ -1,10 +1,3 @@
-// =============================================================================
-// medicineModel.js - Medicine Inventory & SQL Join Reports Model
-// =============================================================================
-// Model Logic:
-// Runs pure SQL queries against MySQL to read, write, and join tables.
-// =============================================================================
-
 const db = require('../config/db');
 
 // Helper: Get ID of existing item by name, or insert it and get new ID
