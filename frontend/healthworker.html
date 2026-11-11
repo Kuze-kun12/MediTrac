@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MediTrac Health Worker</title>
+  <title>MediTrac Health Worker — Barangay Distribution</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -12,21 +12,110 @@
       <div class="brand-box">+</div>
       <div>
         <h1 class="brand-title">MediTrac</h1>
+        <p style="margin: 0; font-size: 12px; color: rgba(255,255,255,0.85);">Barangay Health Worker Portal</p>
       </div>
     </div>
-    <button class="logout-btn" onclick="location.href='/'">Log out</button>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 13px; color: #fff;">Logged in as: <strong>Worker Sarah</strong></span>
+      <button class="logout-btn" onclick="location.href='/'">Log out</button>
+    </div>
   </header>
 
   <main class="page-shell">
+    <!-- ===== ANNOUNCEMENT BANNER (from Admin) ===== -->
+    <div id="announcementBanner" style="margin-bottom: 16px; display: none;">
+      <div style="background: #fff8e1; border-left: 5px solid #f59e0b; border-radius: 8px; padding: 14px 18px;">
+        <strong style="color: #b45309;">📢 Admin Announcements</strong>
+        <ul id="announcementList" style="margin: 8px 0 0 0; padding-left: 18px; color: #374151;"></ul>
+      </div>
+    </div>
+
+    <!-- Role Explanation Banner -->
+    <div class="explanation-card" style="margin-bottom: 20px;">
+      <h4>🏥 Health Worker Role: Distribute to EACH BARANGAY</h4>
+      <p>
+        <strong>Simple Monkey Logic:</strong> Health Workers don't sit behind a clinic desk — they work in the community! When the central health unit receives supplies, the Health Worker <strong>distributes and dispatches medicine stock to each Barangay Health Station</strong> (e.g. North Sub-Station, East Station, Valencia). This ensures every satellite barangay clinic has life-saving medicine!
+      </p>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- BARANGAY DISTRIBUTION FORM                                          -->
+    <!-- =================================================================== -->
+    <section class="simple-box">
+      <h2>Distribute Medicine to Barangay Sub-Station</h2>
+      <p class="small-text">Select the destination barangay health station, pick the medicine batch, enter the allocation quantity, and dispatch.</p>
+
+      <div class="dispense-form" style="max-width: 640px;">
+        <label>
+          Target Barangay Health Station (Destination)
+          <select id="targetStationSelect">
+            <option value="">-- Select Destination Barangay Station --</option>
+          </select>
+        </label>
+
+        <label>
+          Medicine Batch to Allocate (Available Stock)
+          <select id="distBatchSelect">
+            <option value="">-- Select Medicine Batch --</option>
+          </select>
+        </label>
+
+        <label>
+          Quantity to Allocate / Distribute (Units)
+          <input id="distQtyInput" type="number" min="1" value="10" />
+        </label>
+
+        <label>
+          Barangay Allocation Purpose / Note
+          <input id="distNoteInput" type="text" placeholder="e.g. Monthly replenishment for Purok 2 clinic" />
+        </label>
+
+        <button id="distributeBtn" class="primary-btn" style="padding: 12px; font-size: 15px; background: #15803d;">
+          Dispatch & Distribute to Barangay Station
+        </button>
+        <div id="distMessage" class="msg-box"></div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- BARANGAY STATIONS SUMMARY CARDS                                     -->
+    <!-- =================================================================== -->
+    <section class="simple-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="margin: 0;">Barangay Health Stations Distribution Overview</h3>
+        <button id="refreshSummaryBtn" class="btn outline small">Refresh</button>
+      </div>
+      <p class="small-text">Real-time status of medicine allocations and disbursements across all barangay health posts.</p>
+
+      <div class="station-summary-grid" id="stationsGrid">
+        <div class="station-card">Loading barangay stations...</div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- ACTIVE SAFETY WARNINGS                                              -->
+    <!-- =================================================================== -->
     <div class="warning-box">
-      <h3>Warnings</h3>
+      <h3>Active Safety Warnings (Barangay Stock Alerts)</h3>
       <ul class="warning-list" id="warningList"></ul>
     </div>
 
+    <!-- =================================================================== -->
+    <!-- BARANGAY MEDICINE INVENTORY EXPLORER                                -->
+    <!-- =================================================================== -->
     <div class="panel">
       <div class="top-row">
-        <h2>Medicine Inventory</h2>
-        <input id="searchBox" class="search" type="text" placeholder="Search medicine..." />
+        <div>
+          <h2>Barangay Medicine Inventory</h2>
+          <p class="small-text" style="margin-top: 4px;">Explore available medicine batches by barangay location.</p>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <select id="filterStationSelect" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;">
+            <option value="">All Barangay Stations</option>
+          </select>
+          <input id="searchBox" class="search" type="text" placeholder="Search medicine..." />
+        </div>
       </div>
 
       <table class="health-table">
@@ -35,89 +124,256 @@
             <th>ID</th>
             <th>Medicine</th>
             <th>Category</th>
+            <th>Barangay Station</th>
             <th>Batch</th>
-            <th>Qty</th>
-            <th>Expiry</th>
-            <th>Reorder</th>
+            <th>Qty on Hand</th>
+            <th>Expiry Date</th>
+            <th>Reorder Level</th>
           </tr>
         </thead>
-        <tbody id="tableBody"></tbody>
+        <tbody id="tableBody">
+          <tr><td colspan="8" class="empty">Loading inventory...</td></tr>
+        </tbody>
       </table>
     </div>
   </main>
 
   <script>
+    const targetStationSelect = document.getElementById('targetStationSelect');
+    const distBatchSelect = document.getElementById('distBatchSelect');
+    const distQtyInput = document.getElementById('distQtyInput');
+    const distNoteInput = document.getElementById('distNoteInput');
+    const distributeBtn = document.getElementById('distributeBtn');
+    const distMessage = document.getElementById('distMessage');
+    const stationsGrid = document.getElementById('stationsGrid');
+    const refreshSummaryBtn = document.getElementById('refreshSummaryBtn');
+    const warningList = document.getElementById('warningList');
     const tableBody = document.getElementById('tableBody');
     const searchBox = document.getElementById('searchBox');
-    const warningList = document.getElementById('warningList');
+    const filterStationSelect = document.getElementById('filterStationSelect');
 
+    let allInventory = [];
+
+    function setMessage(text, isError = false) {
+      distMessage.textContent = text;
+      distMessage.className = 'msg-box ' + (isError ? 'error' : 'ok');
+    }
+
+    // 1. Load Barangay Summary
+    async function loadBarangaySummary() {
+      try {
+        const res = await fetch('/api/barangay-summary');
+        const data = await res.json();
+        const items = data.items || [];
+
+        if (items.length === 0) {
+          stationsGrid.innerHTML = '<p class="empty-small">No barangay stations found.</p>';
+          return;
+        }
+
+        stationsGrid.innerHTML = items.map(station => `
+          <div class="station-card">
+            <h4>${station.stationName}</h4>
+            <div class="address">${station.address || 'Barangay Sub-center'}</div>
+            <div class="stat">${station.totalQtyDistributed || 0}</div>
+            <div class="stat-label">Units Allocated (${station.totalDistributions || 0} shipments)</div>
+          </div>
+        `).join('');
+      } catch (err) {
+        stationsGrid.innerHTML = '<p class="empty-small">Error loading station summary.</p>';
+      }
+    }
+
+    // 2. Load Options for Dropdowns
+    async function loadOptions() {
+      try {
+        const res = await fetch('/api/dispensing-options');
+        const data = await res.json();
+        const stations = data.stations || [];
+        const batches = data.batches || [];
+
+        targetStationSelect.innerHTML = '<option value="">-- Select Destination Barangay Station --</option>' +
+          stations.map(s => `<option value="${s.id}">${s.name} (${s.address || 'Sub-station'})</option>`).join('');
+
+        filterStationSelect.innerHTML = '<option value="">All Barangay Stations</option>' +
+          stations.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+
+        distBatchSelect.innerHTML = '<option value="">-- Select Medicine Batch --</option>' +
+          batches.map(b => `<option value="${b.id}">${b.medName} [Batch: ${b.batchNo}] — Available: ${b.qtyOnHand} pcs</option>`).join('');
+      } catch (err) {
+        setMessage('Failed to load station options.', true);
+      }
+    }
+
+    // 3. Load Warnings
     async function loadWarnings() {
-      const res = await fetch('/api/alerts');
-      const data = await res.json();
-      const alerts = data.alerts || [];
+      try {
+        const res = await fetch('/api/alerts');
+        const data = await res.json();
+        const alerts = data.alerts || [];
 
-      if (alerts.length === 0) {
-        warningList.innerHTML = '<li class="warning-item"><strong>No warnings.</strong> Everything looks okay.</li>';
+        if (alerts.length === 0) {
+          warningList.innerHTML = '<li class="warning-item"><strong>All Clear!</strong> All barangay stock levels are above safety reorder thresholds.</li>';
+          return;
+        }
+
+        warningList.innerHTML = alerts.map(item => {
+          const isExpired = new Date(item.expiry_date) < new Date();
+          const type = isExpired ? 'Expired Stock' : 'Low Stock Alert';
+          const badgeColor = isExpired ? 'color:#b91c1c;' : 'color:#c2410c;';
+
+          return `<li class="warning-item">
+            <strong style="${badgeColor}">[${type}]</strong> ${item.generic_name} (Batch: ${item.batch_no}) —
+            Stock: <strong>${item.qty_on_hand}</strong> (Threshold: ${item.reorder_level}) —
+            Expires: <strong>${item.expiry_date ? String(item.expiry_date).substring(0, 10) : 'N/A'}</strong>
+          </li>`;
+        }).join('');
+      } catch (err) {
+        console.error('Error loading warnings', err);
+      }
+    }
+
+    // 4. Load Medicine Inventory
+    async function loadMedicines() {
+      try {
+        const res = await fetch('/api/data');
+        const data = await res.json();
+        allInventory = Array.isArray(data) ? data : (data.items || []);
+        renderInventoryTable(allInventory);
+      } catch (err) {
+        tableBody.innerHTML = '<tr><td colspan="8" class="empty">Error loading inventory.</td></tr>';
+      }
+    }
+
+    function renderInventoryTable(items) {
+      if (!items || items.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="8" class="empty">No medicines found for this station.</td></tr>';
         return;
       }
 
-      warningList.innerHTML = alerts.map(item => {
-        let type = 'Low Stock';
-
-        if (new Date(item.expiry_date) < new Date()) {
-          type = 'Expired';
-        }
-
-        return '<li class="warning-item"><strong>' + type + ':</strong> ' + item.generic_name + ' (' + item.batch_no + ') - Qty: ' + item.qty_on_hand + ' - Expiry: ' + item.expiry_date + '</li>';
-      }).join('');
-    }
-
-    async function loadMedicines() {
-      const res = await fetch('/api/data');
-      const data = await res.json();
-      const items = Array.isArray(data) ? data : (data.items || []);
-
-      const rows = items.map(item => `
+      tableBody.innerHTML = items.map(item => `
         <tr>
           <td>${item.id ?? ''}</td>
-          <td>${item.medName ?? ''}</td>
-          <td>${item.category ?? ''}</td>
-          <td>${item.batchNo ?? ''}</td>
-          <td>${item.qtyOnHand ?? ''}</td>
-          <td>${item.expiry ?? ''}</td>
-          <td>${item.reorderLevel ?? ''}</td>
+          <td><strong>${item.medName ?? ''}</strong></td>
+          <td><span class="badge-tag badge-blue">${item.category ?? 'General'}</span></td>
+          <td><span class="badge-tag badge-green">${item.barangay ?? 'Central'}</span></td>
+          <td><code>${item.batchNo ?? 'No batch'}</code></td>
+          <td><strong>${item.qtyOnHand ?? 0}</strong></td>
+          <td>${item.expiry ? String(item.expiry).substring(0, 10) : 'N/A'}</td>
+          <td>${item.reorderLevel ?? 0}</td>
         </tr>
       `).join('');
-
-      tableBody.innerHTML = rows || '<tr><td colspan="7" class="empty">No medicine found.</td></tr>';
     }
 
-    searchBox.addEventListener('input', async function () {
-      const keyword = searchBox.value.toLowerCase();
-      const res = await fetch('/api/data');
-      const data = await res.json();
-      const items = Array.isArray(data) ? data : (data.items || []);
+    function applyFilters() {
+      const keyword = searchBox.value.toLowerCase().trim();
+      const stationFilter = filterStationSelect.value;
 
-      const filtered = items.filter(item => {
-        const text = [item.medName, item.category, item.batchNo].join(' ').toLowerCase();
-        return text.includes(keyword);
+      const filtered = allInventory.filter(item => {
+        const matchesKeyword = [item.medName, item.category, item.batchNo].join(' ').toLowerCase().includes(keyword);
+        const matchesStation = !stationFilter || (item.barangay && item.barangay.toLowerCase() === stationFilter.toLowerCase());
+        return matchesKeyword && matchesStation;
       });
 
-      tableBody.innerHTML = filtered.map(item => `
-        <tr>
-          <td>${item.id ?? ''}</td>
-          <td>${item.medName ?? ''}</td>
-          <td>${item.category ?? ''}</td>
-          <td>${item.batchNo ?? ''}</td>
-          <td>${item.qtyOnHand ?? ''}</td>
-          <td>${item.expiry ?? ''}</td>
-          <td>${item.reorderLevel ?? ''}</td>
-        </tr>
-      `).join('') || '<tr><td colspan="7" class="empty">No medicine found.</td></tr>';
+      renderInventoryTable(filtered);
+    }
+
+    searchBox.addEventListener('input', applyFilters);
+    filterStationSelect.addEventListener('change', applyFilters);
+    refreshSummaryBtn.addEventListener('click', loadBarangaySummary);
+
+    // 5. Handle Distribute Button Click
+    distributeBtn.addEventListener('click', async function () {
+      const stationId = targetStationSelect.value;
+      const batchId = distBatchSelect.value;
+      const qty = Number(distQtyInput.value);
+      const note = distNoteInput.value.trim() || 'Barangay Health Station Allocation';
+
+      if (!stationId) {
+        setMessage('Please choose a destination barangay health station.', true);
+        return;
+      }
+
+      if (!batchId) {
+        setMessage('Please choose a medicine batch to distribute.', true);
+        return;
+      }
+
+      if (!qty || qty <= 0) {
+        setMessage('Please enter a valid quantity of 1 or more.', true);
+        return;
+      }
+
+      const selectedStationName = targetStationSelect.options[targetStationSelect.selectedIndex].text.split('(')[0].trim();
+
+      const payload = {
+        station_id: stationId,
+        batch_id: batchId,
+        qty: qty,
+        patient_name: `Barangay Allocation: ${selectedStationName} (${note})`,
+      };
+
+      try {
+        distributeBtn.disabled = true;
+        distributeBtn.textContent = 'Dispatching to Barangay...';
+
+        const res = await fetch('/api/dispensing-records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to dispatch distribution.');
+        }
+
+        setMessage(`Successfully dispatched ${qty} units of ${data.item.medicine} to ${selectedStationName}! Stock deducted.`);
+        distQtyInput.value = '10';
+        distNoteInput.value = '';
+
+        // Reload data
+        await Promise.all([
+          loadBarangaySummary(),
+          loadOptions(),
+          loadMedicines(),
+          loadWarnings(),
+        ]);
+      } catch (err) {
+        setMessage(err.message || 'Something went wrong.', true);
+      } finally {
+        distributeBtn.disabled = false;
+        distributeBtn.textContent = 'Dispatch & Distribute to Barangay Station';
+      }
     });
 
+    // Initialize Page
+    loadBarangaySummary();
+    loadOptions();
     loadWarnings();
     loadMedicines();
+
+    // Load announcements from admin and show at the top
+    async function loadAnnouncements() {
+      try {
+        const res  = await fetch('/api/announcements');
+        const data = await res.json();
+        const items = data.items || [];
+        if (items.length === 0) return; // no announcements, keep banner hidden
+
+        document.getElementById('announcementBanner').style.display = 'block';
+        document.getElementById('announcementList').innerHTML = items.map(a => `
+          <li style="margin-bottom: 6px;">
+            <strong>${a.title}</strong> — ${a.body}
+            <small style="color:#9ca3af; margin-left: 8px;">${new Date(a.createdAt).toLocaleDateString()}</small>
+          </li>
+        `).join('');
+      } catch (err) {
+        // silently fail — announcements are not critical
+      }
+    }
+    loadAnnouncements();
   </script>
 </body>
 </html>
