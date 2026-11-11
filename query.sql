@@ -1,4 +1,3 @@
-
 create table roles(
     role_id int auto_increment primary key,
     role_name varchar(255) not null unique
@@ -144,3 +143,15 @@ CREATE TABLE alerts (
     FOREIGN KEY (medicine_id) REFERENCES medicines(medicine_id),
     FOREIGN KEY (batch_id) REFERENCES medicine_batches(batch_id)
 );
+
+
+CREATE TABLE announcements (
+    announcement_id INT PRIMARY KEY AUTO_INCREMENT,
+    title           VARCHAR(255) NOT NULL,
+    body            TEXT NOT NULL,
+    posted_by       INT NOT NULL,
+    created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (posted_by) REFERENCES users(user_id)
+);
+
+

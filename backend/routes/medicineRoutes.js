@@ -1,102 +1,59 @@
+// =============================================================================
+// medicineRoutes.js - Medicine Inventory & Report Routes
+// =============================================================================
+// Purpose: Maps medicine inventory CRUD, FEFO, alerts, and join report endpoints.
+// =============================================================================
+
 const express = require('express');
 const router = express.Router();
 const {
-  getAllMedicines,
+  getMedicines,
   getMedicineById,
-  addMedicine,
-  updateMedicine,
-  deleteMedicine,
-  getFefoOrder,
-  getAlerts,
-  createAlert,
-  resolveAlert,
-  deleteAlert,
-  getMedicinesWithCategory,
-  getMedicinesWithMissingBatch,
-  getStationsWithBatchesRightJoin,
-  getMedicineFullOuterJoinSimulated,
+  createMedicine,
+  updateMedicineRecord,
+  deleteMedicineRecord,
+  getMedicineAlerts,
+  createAlertRecord,
+  resolveAlertRecord,
+  deleteAlertRecord,
+  getFefo,
+  getJoinedMedicines,
+  getMissingBatchReport,
+  getFullOuterReport,
+  getRightJoinReport,
 } = require('../controllers/medicineController');
 
-// HTTP GET - Read operations & SQL Joins
-router.get('/api/data', getAllMedicines);
-router.get('/api/data/:id', getMedicineById);
-router.get('/api/fefo', async (req, res) => {
-  try {
-    const data = await getFefoOrder();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-router.get('/api/alerts', async (req, res) => {
-  try {
-    const data = await getAlerts();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-router.get('/api/joined-category', async (req, res) => {
-  try {
-    const data = await getMedicinesWithCategory();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-router.get('/api/missing-batch', async (req, res) => {
-  try {
-    const data = await getMedicinesWithMissingBatch();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-router.get('/api/stations-right-join', async (req, res) => {
-  try {
-    const data = await getStationsWithBatchesRightJoin();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-router.get('/api/full-outer-join', async (req, res) => {
-  try {
-    const data = await getMedicineFullOuterJoinSimulated();
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// -----------------------------------------------------------------------------
+// HTTP GET - Read operations & Reports
+// -----------------------------------------------------------------------------
+router.get('/api/data', getMedicines);                         // Get all medicines with active batches
+router.get('/api/data/:id', getMedicineById);                  // Get single medicine by ID
+router.get('/api/medicines/:id', getMedicineById);             // Alias for single medicine by ID
+router.get('/api/alerts', getMedicineAlerts);                  // Get expiry and low-stock alerts
+router.get('/api/fefo', getFefo);                              // Get FEFO-ordered inventory
+router.get('/api/joined-medicines', getJoinedMedicines);        // INNER JOIN report: medicine + category
+router.get('/api/reports/missing-batches', getMissingBatchReport); // LEFT JOIN report: medicines with no batch
+router.get('/api/reports/full-outer-medicines', getFullOuterReport); // FULL OUTER JOIN report (UNION)
+router.get('/api/reports/full-outer-join', getFullOuterReport);      // Alias for FULL OUTER JOIN report
+router.get('/api/reports/right-join', getRightJoinReport);           // RIGHT JOIN report: health stations and batches
 
+// -----------------------------------------------------------------------------
 // HTTP POST - Create operations
-router.post('/api/data', async (req, res) => {
-  try {
-    const result = await addMedicine(req.body);
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// -----------------------------------------------------------------------------
+router.post('/api/data', createMedicine);                      // Add new medicine and batch
+router.post('/api/medicines', createMedicine);                 // Alias endpoint for adding medicine
+router.post('/api/alerts', createAlertRecord);                 // Create new warning/alert
 
+// -----------------------------------------------------------------------------
 // HTTP PUT - Update operations
-router.put('/api/data/:id', async (req, res) => {
-  try {
-    const result = await updateMedicine(req.params.id, req.body);
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// -----------------------------------------------------------------------------
+router.put('/api/data/:id', updateMedicineRecord);             // Update medicine and batch details
+router.put('/api/alerts/:id/resolve', resolveAlertRecord);     // Resolve an alert
 
+// -----------------------------------------------------------------------------
 // HTTP DELETE - Delete operations
-router.delete('/api/data/:id', async (req, res) => {
-  try {
-    const result = await deleteMedicine(req.params.id);
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+// -----------------------------------------------------------------------------
+router.delete('/api/data/:id', deleteMedicineRecord);          // Safely delete medicine and child records
+router.delete('/api/alerts/:id', deleteAlertRecord);           // Dismiss/delete an alert
 
 module.exports = router;
