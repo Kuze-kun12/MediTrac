@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MediTrac Pharmacist</title>
+  <title>MediTrac Pharmacist — Patient Dispensing</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -12,111 +12,232 @@
       <div class="brand-box">+</div>
       <div>
         <h1 class="brand-title">MediTrac</h1>
+        <p style="margin: 0; font-size: 12px; color: rgba(255,255,255,0.85);">Pharmacist Portal</p>
       </div>
     </div>
-    <button class="logout-btn" onclick="location.href='/'">Log out</button>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 13px; color: #fff;">Logged in as: <strong>Pharma John</strong></span>
+      <button class="logout-btn" onclick="location.href='/'">Log out</button>
+    </div>
   </header>
 
   <main class="page-shell">
-    <section class="simple-box">
-      <h2>Barangay Health Center Record</h2>
-      <p class="small-text">Simple dispensing log. Pick the center, pick the medicine batch, then save.</p>
+    <!-- ===== ANNOUNCEMENT BANNER (from Admin) ===== -->
+    <div id="announcementBanner" style="margin-bottom: 16px; display: none;">
+      <div style="background: #fff8e1; border-left: 5px solid #f59e0b; border-radius: 8px; padding: 14px 18px;">
+        <strong style="color: #b45309;">📢 Admin Announcements</strong>
+        <ul id="announcementList" style="margin: 8px 0 0 0; padding-left: 18px; color: #374151;"></ul>
+      </div>
+    </div>
 
-      <div class="dispense-form">
+    <!-- Role Explanation Banner -->
+    <div class="explanation-card" style="margin-bottom: 20px;">
+      <h4>💊 Pharmacist Role: Distribution of Medicines to PATIENTS</h4>
+      <p>
+        <strong>Simple Monkey Logic:</strong> The Pharmacist is the clinic dispenser! When a sick person walks in with a prescription, the Pharmacist selects the <strong>Patient</strong>, allocates the medicine batch (prioritizing earliest expiry via <strong>FEFO</strong>), and records the distribution. Stock is automatically subtracted from inventory.
+      </p>
+    </div>
+
+    <section class="simple-box">
+      <h2>Dispense Medicine to Patient</h2>
+      <p class="small-text">Select the patient, choose the medicine batch, specify the prescribed quantity, and click dispense.</p>
+
+      <div class="dispense-form" style="max-width: 640px;">
+        <!-- PATIENT SELECTION -->
         <label>
-          Barangay Health Center
-          <select id="stationSelect">
-            <option value="">Select center</option>
+          Patient Name
+          <select id="patientSelect">
+            <option value="">-- Choose Registered Patient --</option>
           </select>
         </label>
 
+        <div id="newPatientBox" style="display: none;">
+          <label>
+            New Patient Full Name
+            <input id="newPatientName" type="text" placeholder="Enter patient full name (e.g., Pedro Penduko)" />
+          </label>
+        </div>
+
+        <!-- MEDICINE BATCH SELECTION -->
         <label>
-          Medicine & Batch
+          Medicine & Batch (FEFO Sorted - Earliest Expiry First)
           <select id="batchSelect">
             <option value="">Select medicine batch</option>
           </select>
         </label>
 
+        <!-- DISPENSING CLINIC / STATION -->
         <label>
-          Quantity
+          Dispensing Health Station
+          <select id="stationSelect">
+            <option value="">Select dispensing station</option>
+          </select>
+        </label>
+
+        <!-- QUANTITY -->
+        <label>
+          Prescription Quantity (Units/Pills)
           <input id="qtyInput" type="number" min="1" value="1" />
         </label>
 
-        <label>
-          For / Note
-          <input id="patientName" type="text" placeholder="Barangay distribution" />
-        </label>
-
-        <button id="saveBtn" class="primary-btn">Save to Record Log</button>
+        <button id="saveBtn" class="primary-btn" style="padding: 12px; font-size: 15px;">Dispense Medicine to Patient</button>
         <div id="saveMessage" class="msg-box"></div>
       </div>
     </section>
 
+    <!-- DISPENSING RECORD LOG -->
     <section class="simple-box">
-      <h3>Dispensing Record Log</h3>
-      <div id="recordLog" class="record-log"></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="margin: 0;">Patient Dispensing Record Log</h3>
+        <span id="logCount" class="badge-tag badge-green">0 records</span>
+      </div>
+      <p class="small-text">Complete clinical audit log tracking every medicine distributed to patients.</p>
+
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Dispense #</th>
+              <th>Patient Name</th>
+              <th>Medicine Dispensed</th>
+              <th>Batch Number</th>
+              <th>Station / Clinic</th>
+              <th>Qty Dispensed</th>
+              <th>Date & Time</th>
+            </tr>
+          </thead>
+          <tbody id="recordLogBody">
+            <tr><td colspan="7" class="empty">Loading dispensing records...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </main>
 
   <script>
+    const patientSelect = document.getElementById('patientSelect');
+    const newPatientBox = document.getElementById('newPatientBox');
+    const newPatientName = document.getElementById('newPatientName');
     const stationSelect = document.getElementById('stationSelect');
     const batchSelect = document.getElementById('batchSelect');
     const qtyInput = document.getElementById('qtyInput');
-    const patientName = document.getElementById('patientName');
     const saveBtn = document.getElementById('saveBtn');
     const saveMessage = document.getElementById('saveMessage');
-    const recordLog = document.getElementById('recordLog');
+    const recordLogBody = document.getElementById('recordLogBody');
+    const logCount = document.getElementById('logCount');
 
     function setMessage(text, isError = false) {
       saveMessage.textContent = text;
       saveMessage.className = 'msg-box ' + (isError ? 'error' : 'ok');
     }
 
+    // Toggle custom patient name input if "+ Add New Patient" is selected
+    patientSelect.addEventListener('change', function () {
+      if (this.value === 'NEW') {
+        newPatientBox.style.display = 'block';
+        newPatientName.focus();
+      } else {
+        newPatientBox.style.display = 'none';
+        newPatientName.value = '';
+      }
+    });
+
     async function loadDispensingOptions() {
-      const res = await fetch('/api/dispensing-options');
-      const data = await res.json();
-      const stations = data.stations || data.items || [];
-      const batches = data.batches || [];
+      try {
+        const res = await fetch('/api/dispensing-options');
+        const data = await res.json();
+        const stations = data.stations || [];
+        const batches = data.batches || [];
+        const patients = data.patients || [];
 
-      stationSelect.innerHTML = '<option value="">Select center</option>' +
-        stations.map(item => `<option value="${item.id}">${item.name}</option>`).join('');
+        // Populate Patients
+        let patientOptions = '<option value="">-- Choose Registered Patient --</option>';
+        patients.forEach(p => {
+          patientOptions += `<option value="${p.id}">${p.fullName} (${p.purok || 'Resident'})</option>`;
+        });
+        patientOptions += '<option value="NEW">+ Register New Walk-in Patient</option>';
+        patientSelect.innerHTML = patientOptions;
 
-      batchSelect.innerHTML = '<option value="">Select medicine batch</option>' +
-        batches.map(item => `<option value="${item.id}">${item.medName} (${item.batchNo}) - Qty: ${item.qtyOnHand}</option>`).join('');
+        // Populate Stations
+        stationSelect.innerHTML = '<option value="">Select dispensing station</option>' +
+          stations.map(item => `<option value="${item.id}">${item.name}</option>`).join('');
+
+        // Populate Batches (FEFO)
+        batchSelect.innerHTML = '<option value="">Select medicine batch</option>' +
+          batches.map(item => {
+            const expDate = item.expiry ? String(item.expiry).substring(0, 10) : 'N/A';
+            return `<option value="${item.id}">${item.medName} [Batch: ${item.batchNo}] — Stock: ${item.qtyOnHand} — Exp: ${expDate}</option>`;
+          }).join('');
+      } catch (err) {
+        setMessage('Failed to load dispensing options from server.', true);
+      }
     }
 
     async function loadRecordLog() {
-      const res = await fetch('/api/dispensing-records');
-      const data = await res.json();
-      const items = data.items || [];
+      try {
+        const res = await fetch('/api/dispensing-records');
+        const data = await res.json();
+        const items = data.items || [];
 
-      recordLog.innerHTML = items.length
-        ? items.map(item => `
-            <div class="record-item">
-              <div>
-                <strong>${item.barangay || 'Center'}</strong>
-                <span>${item.medName || ''} (${item.batchNo || ''})</span>
-              </div>
-              <div class="qty-box">${item.qty || 0}</div>
-            </div>
-          `).join('')
-        : '<p class="empty-small">No saved record yet.</p>';
+        logCount.textContent = items.length + ' records';
+
+        if (items.length === 0) {
+          recordLogBody.innerHTML = '<tr><td colspan="7" class="empty">No dispensing records found.</td></tr>';
+          return;
+        }
+
+        recordLogBody.innerHTML = items.map(item => {
+          const formattedDate = item.dispensedAt ? new Date(item.dispensedAt).toLocaleString() : 'Recent';
+          return `
+            <tr>
+              <td>#${item.id || ''}</td>
+              <td><strong>${item.patientName || 'Barangay Citizen'}</strong></td>
+              <td>${item.medName || ''}</td>
+              <td><code>${item.batchNo || ''}</code></td>
+              <td>${item.barangay || 'Central Clinic'}</td>
+              <td><span class="badge-tag badge-blue">${item.qty || 0} units</span></td>
+              <td><small>${formattedDate}</small></td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        recordLogBody.innerHTML = '<tr><td colspan="7" class="empty">Error loading dispensing log.</td></tr>';
+      }
     }
 
     saveBtn.addEventListener('click', async function () {
-      const payload = {
-        station_id: stationSelect.value,
-        batch_id: batchSelect.value,
-        qty: qtyInput.value,
-        patient_name: patientName.value,
-      };
+      const isNewPatient = patientSelect.value === 'NEW';
+      const patientId = !isNewPatient && patientSelect.value ? Number(patientSelect.value) : null;
+      const customName = isNewPatient ? newPatientName.value.trim() : '';
 
-      if (!payload.station_id || !payload.batch_id) {
-        setMessage('Please choose a barangay health center and medicine batch.', true);
+      if (!patientId && !customName) {
+        setMessage('Please select a registered patient or enter a walk-in patient name.', true);
         return;
       }
 
+      if (!stationSelect.value || !batchSelect.value) {
+        setMessage('Please choose a health station and medicine batch.', true);
+        return;
+      }
+
+      const qty = Number(qtyInput.value);
+      if (!qty || qty <= 0) {
+        setMessage('Please enter a valid quantity of 1 or more.', true);
+        return;
+      }
+
+      const payload = {
+        station_id: stationSelect.value,
+        batch_id: batchSelect.value,
+        qty: qty,
+        patient_id: patientId,
+        patient_name: customName,
+      };
+
       try {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Dispensing...';
+
         const res = await fetch('/api/dispensing-records', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -126,20 +247,52 @@
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-          throw new Error(data.message || 'Failed to save record');
+          throw new Error(data.message || 'Failed to dispense medicine.');
         }
 
-        setMessage('Saved successfully to the dispensing record log.');
+        setMessage(`Dispensed ${qty} units of ${data.item.medicine} to ${data.item.patientName || 'Patient'} successfully! Stock updated.`);
         qtyInput.value = '1';
-        patientName.value = '';
+        newPatientName.value = '';
+        if (isNewPatient) {
+          patientSelect.value = '';
+          newPatientBox.style.display = 'none';
+        }
+
+        // Refresh batches and dispensing log immediately
+        await loadDispensingOptions();
         await loadRecordLog();
       } catch (error) {
         setMessage(error.message || 'Something went wrong.', true);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Dispense Medicine to Patient';
       }
     });
 
+    // Initialize page
     loadDispensingOptions();
     loadRecordLog();
+
+    // Load announcements from admin and show at the top
+    async function loadAnnouncements() {
+      try {
+        const res  = await fetch('/api/announcements');
+        const data = await res.json();
+        const items = data.items || [];
+        if (items.length === 0) return; // no announcements, keep banner hidden
+
+        document.getElementById('announcementBanner').style.display = 'block';
+        document.getElementById('announcementList').innerHTML = items.map(a => `
+          <li style="margin-bottom: 6px;">
+            <strong>${a.title}</strong> — ${a.body}
+            <small style="color:#9ca3af; margin-left: 8px;">${new Date(a.createdAt).toLocaleDateString()}</small>
+          </li>
+        `).join('');
+      } catch (err) {
+        // silently fail — announcements are not critical
+      }
+    }
+    loadAnnouncements();
   </script>
 </body>
 </html>

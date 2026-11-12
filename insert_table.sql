@@ -97,6 +97,11 @@ VALUES
     ('low_stock', 1, 2, '2026-10-06 08:00:00', NULL),
     ('expired', 2, 3, '2026-10-07 09:00:00', '2026-10-07 12:00:00');
 
+INSERT INTO announcements (title, body, posted_by, created_at)
+VALUES
+    ('Urgent: Cold Chain Storage Check', 'Please inspect refrigerator temperature gauges in all satellite stations immediately.', 1, NOW()),
+    ('Priority FEFO Dispatch', 'Prioritize Paracetamol Batch 002 for all routine dispensing due to approaching expiry.', 1, NOW());
+
 select * from roles;
 select * from health_stations;
 select * from medicine_categories;

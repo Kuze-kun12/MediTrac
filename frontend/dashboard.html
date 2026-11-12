@@ -22,151 +22,396 @@
         <strong>Admin User</strong>
         <span class="role">Administrator</span>
       </div>
+      <button class="btn outline small" style="margin-left: 14px;" onclick="location.href='/'">Log out</button>
     </div>
   </header>
 
   <nav class="menu">
     <div class="nav">
       <div class="nav-group">
-        <span class="nav-title">Medicine</span>
-        <button class="nav-btn active">Inventory</button>
-        <button class="nav-btn">Alerts</button>
+        <span class="nav-title">Inventory & Alerts</span>
+        <button id="navInventory" class="nav-btn active">Inventory</button>
+        <button id="navAlerts" class="nav-btn">Alerts</button>
       </div>
       <div class="nav-group">
-        <span class="nav-title">Account</span>
-        <button class="nav-btn">Users</button>
-        <button class="nav-btn">Reports</button>
+        <span class="nav-title">Defense Reports & Logic</span>
+        <button id="navReports" class="nav-btn">SQL Join Reports</button>
+        <button id="navRoles" class="nav-btn">System Roles Guide</button>
+      </div>
+      <div class="nav-group">
+        <span class="nav-title">Communication</span>
+        <button id="navAnnouncements" class="nav-btn">📢 Announcements</button>
       </div>
     </div>
   </nav>
 
   <main class="page">
-    <div class="page-head">
-      <div>
-        <h2>Medicine Inventory</h2>
-        <p class="help">Track stock levels and update medicine records.</p>
-      </div>
-
-      <div class="toolbar">
-        <input id="searchBox" class="search" type="text" placeholder="Search medicine..." />
-        <button id="addBtn" class="btn green">Add Medicine</button>
-      </div>
-    </div>
-
+    <!-- SYSTEM MESSAGE BOX -->
     <div id="msg" class="msg"></div>
 
-    <div class="form-card" id="formCard" style="display:none;">
-      <h3>Add New Medicine</h3>
-      <p class="hint">Fill in the medicine details below.</p>
-
-      <form id="medicineForm">
-        <div class="form-grid">
-          <div>
-            <label for="medName">Medicine Name</label>
-            <input id="medName" name="medName" type="text" required>
-          </div>
-
-          <div>
-            <label for="category">Category</label>
-            <input id="category" name="category" type="text" required>
-          </div>
-
-          <div>
-            <label for="batchNo">Batch No</label>
-            <input id="batchNo" name="batchNo" type="text" required>
-          </div>
-
-          <div>
-            <label for="qtyOnHand">Quantity on Hand</label>
-            <input id="qtyOnHand" name="qtyOnHand" type="number" min="0" required>
-          </div>
-
-          <div>
-            <label for="expiry">Expiry Date</label>
-            <input id="expiry" name="expiry" type="date" required>
-          </div>
-
-          <div>
-            <label for="reorderLevel">Reorder Level</label>
-            <input id="reorderLevel" name="reorderLevel" type="number" min="0" required>
-          </div>
-
-          <div>
-            <label for="strength">Strength</label>
-            <input id="strength" name="strength" type="text" value="N/A">
-          </div>
-
-          <div>
-            <label for="dosageForm">Dosage Form</label>
-            <input id="dosageForm" name="dosageForm" type="text" value="Tablet">
-          </div>
-
-          <div>
-            <label for="unit">Unit</label>
-            <input id="unit" name="unit" type="text" value="pcs">
-          </div>
-
-          <div>
-            <label for="barangay">Barangay</label>
-            <input id="barangay" name="barangay" type="text" value="Central Health Center">
-          </div>
-
-          <div>
-            <label for="supplier">Supplier</label>
-            <input id="supplier" name="supplier" type="text" value="MedPharma Global">
-          </div>
-
-          <div>
-            <label for="unitCost">Unit Cost</label>
-            <input id="unitCost" name="unitCost" type="number" value="0">
-          </div>
+    <!-- ===================================================================== -->
+    <!-- SECTION 1: INVENTORY CRUD & ACTIVE ALERTS                             -->
+    <!-- ===================================================================== -->
+    <div id="inventorySection">
+      <div class="page-head">
+        <div>
+          <h2>Medicine Inventory</h2>
+          <p class="help">Central inventory management. Track stock levels, batch numbers, and reorder points.</p>
         </div>
 
-        <div class="form-actions">
-          <button class="btn" type="submit">Save</button>
-          <button class="btn gray outline" type="button" id="cancelBtn">Cancel</button>
+        <div class="toolbar">
+          <input id="searchBox" class="search" type="text" placeholder="Search medicine..." />
+          <button id="addBtn" class="btn green">Add Medicine</button>
         </div>
-      </form>
-    </div>
-
-    <div class="alert-box">
-      <h3>Inventory Alerts</h3>
-      <ul class="alert-list" id="alertList"></ul>
-    </div>
-
-    <div class="table-card">
-      <div class="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Medicine</th>
-              <th>Category</th>
-              <th>Batch</th>
-              <th>Qty</th>
-              <th>Expiry</th>
-              <th>Reorder</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
       </div>
-      <div class="table-footer" id="tableFooter">0 medicines</div>
+
+      <div class="form-card" id="formCard" style="display:none;">
+        <h3>Add New Medicine</h3>
+        <p class="hint">Fill in the medicine details below.</p>
+
+        <form id="medicineForm">
+          <div class="form-grid">
+            <div>
+              <label for="medName">Medicine Generic Name</label>
+              <input id="medName" name="medName" type="text" required placeholder="e.g. Paracetamol">
+            </div>
+
+            <div>
+              <label for="category">Category</label>
+              <input id="category" name="category" type="text" required placeholder="e.g. Analgesics">
+            </div>
+
+            <div>
+              <label for="batchNo">Batch No</label>
+              <input id="batchNo" name="batchNo" type="text" required placeholder="e.g. BATCH-2026-001">
+            </div>
+
+            <div>
+              <label for="qtyOnHand">Quantity on Hand</label>
+              <input id="qtyOnHand" name="qtyOnHand" type="number" min="0" required placeholder="e.g. 100">
+            </div>
+
+            <div>
+              <label for="expiry">Expiry Date</label>
+              <input id="expiry" name="expiry" type="date" required>
+            </div>
+
+            <div>
+              <label for="reorderLevel">Safety Reorder Level</label>
+              <input id="reorderLevel" name="reorderLevel" type="number" min="0" required placeholder="e.g. 50">
+            </div>
+
+            <div>
+              <label for="strength">Strength</label>
+              <input id="strength" name="strength" type="text" value="500mg">
+            </div>
+
+            <div>
+              <label for="dosageForm">Dosage Form</label>
+              <input id="dosageForm" name="dosageForm" type="text" value="Tablet">
+            </div>
+
+            <div>
+              <label for="unit">Unit</label>
+              <input id="unit" name="unit" type="text" value="pcs">
+            </div>
+
+            <div>
+              <label for="barangay">Barangay Station</label>
+              <input id="barangay" name="barangay" type="text" value="Central Health Center">
+            </div>
+
+            <div>
+              <label for="supplier">Supplier</label>
+              <input id="supplier" name="supplier" type="text" value="MedPharma Global">
+            </div>
+
+            <div>
+              <label for="unitCost">Unit Cost (₱)</label>
+              <input id="unitCost" name="unitCost" type="number" step="0.01" value="1.50">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn" type="submit">Save Medicine</button>
+            <button class="btn gray outline" type="button" id="cancelBtn">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="alert-box" id="alertsContainer">
+        <h3>Inventory Alerts (Safety Stock & Expiry Rule)</h3>
+        <ul class="alert-list" id="alertList"></ul>
+      </div>
+
+      <div class="table-card">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Medicine</th>
+                <th>Category</th>
+                <th>Station / Barangay</th>
+                <th>Batch</th>
+                <th>Qty</th>
+                <th>Expiry</th>
+                <th>Reorder Level</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer" id="tableFooter">0 medicines</div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- SECTION 2: SQL JOIN REPORTS (INNER, LEFT, RIGHT, FULL OUTER)           -->
+    <!-- ===================================================================== -->
+    <div id="reportsSection" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h2>SQL Join Reports (DBMS 1 & SIA Defense)</h2>
+          <p class="help">Live SQL join queries demonstrating database relationship traversal and reports.</p>
+        </div>
+      </div>
+
+      <!-- Report Tab Selector -->
+      <div class="report-nav">
+        <button class="report-tab-btn active" data-report="inner">1. INNER JOIN (Medicines & Categories)</button>
+        <button class="report-tab-btn" data-report="left">2. LEFT JOIN (Medicines with No Batches)</button>
+        <button class="report-tab-btn" data-report="right">3. RIGHT JOIN (All Health Stations & Batches)</button>
+        <button class="report-tab-btn" data-report="outer">4. FULL OUTER JOIN (All Medicines & Batches)</button>
+      </div>
+
+      <!-- Explanation & SQL Box -->
+      <div class="explanation-card" id="reportExplanation">
+        <h4 id="reportTitle">INNER JOIN</h4>
+        <p id="reportMonkeyText">Loading explanation...</p>
+      </div>
+
+      <div class="sql-code-box" id="reportSql">-- SQL Query will appear here</div>
+
+      <!-- Live Data Table -->
+      <div class="table-card">
+        <div class="table-scroll">
+          <table>
+            <thead id="reportTableHead"></thead>
+            <tbody id="reportTableBody"></tbody>
+          </table>
+        </div>
+        <div class="table-footer" id="reportTableFooter">0 rows loaded</div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- SECTION 3: SYSTEM ROLES & LOGIC GUIDE                                  -->
+    <!-- ===================================================================== -->
+    <div id="rolesSection" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h2>MediTrac System Roles & Architecture Logic</h2>
+          <p class="help">Plain-English breakdown of Admin, Pharmacist, and Health Worker responsibilities.</p>
+        </div>
+      </div>
+
+      <div class="role-grid">
+        <div class="role-pill" style="border-top: 4px solid var(--primary);">
+          <strong>👑 1. ADMINISTRATOR (Central Inventory & Boss)</strong>
+          <span>
+            <strong>Primary Goal:</strong> Manages the master medicine catalog, oversees stock levels, and audits SQL join reports.<br><br>
+            • Adds, updates, and deletes medicines and safety reorder points.<br>
+            • Monitors system-wide automated alerts (Expired & Low Stock).<br>
+            • Runs join reports across all satellite health stations.
+          </span>
+        </div>
+
+        <div class="role-pill" style="border-top: 4px solid #1d4ed8;">
+          <strong>💊 2. PHARMACIST (Dispensing to PATIENTS)</strong>
+          <span>
+            <strong>Primary Goal:</strong> Clinic prescription fulfillment for individual patients.<br><br>
+            • Selects registered patients (e.g. Maria Santos, Juan Dela Cruz).<br>
+            • Allocates medicine batches using FEFO (First-Expired, First-Out).<br>
+            • Atomically deducts stock and maintains patient dispensing history.
+          </span>
+        </div>
+
+        <div class="role-pill" style="border-top: 4px solid #15803d;">
+          <strong>🏥 3. HEALTH WORKER (Distributing to EACH BARANGAY)</strong>
+          <span>
+            <strong>Primary Goal:</strong> Community and satellite station medicine distribution.<br><br>
+            • Dispatches medicine batches to each Barangay Health Station (e.g. North Sub-Station, East Station, Valencia).<br>
+            • Inspects stock levels per barangay.<br>
+            • Receives safety warnings for satellite community stations.
+          </span>
+        </div>
+      </div>
+
+      <div class="table-card" style="margin-top: 24px;">
+        <h3 style="padding: 16px 20px 0 20px; margin: 0;">Role Comparison Matrix</h3>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Role</th>
+                <th>Who They Distribute To</th>
+                <th>Core Action</th>
+                <th>Database Tables Accessed</th>
+                <th>Portal Screen</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Administrator</strong></td>
+                <td>Master Catalog / All Stations</td>
+                <td>Medicine CRUD & SQL Join Auditing</td>
+                <td><code>medicines</code>, <code>medicine_batches</code>, <code>alerts</code></td>
+                <td><code>dashboard.html</code></td>
+              </tr>
+              <tr>
+                <td><strong>Pharmacist</strong></td>
+                <td><strong>Individual Patients</strong></td>
+                <td>Dispenses medicine directly to sick patients</td>
+                <td><code>dispensing_records</code>, <code>dispensing_items</code>, <code>patients</code></td>
+                <td><code>pharmacist.html</code></td>
+              </tr>
+              <tr>
+                <td><strong>Health Worker</strong></td>
+                <td><strong>Each Barangay Station</strong></td>
+                <td>Distributes/allocates batches to barangays</td>
+                <td><code>health_stations</code>, <code>dispensing_records</code>, <code>medicine_batches</code></td>
+                <td><code>healthworker.html</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- SECTION 4: ANNOUNCEMENTS MANAGEMENT                                  -->
+    <!-- ===================================================================== -->
+    <div id="announcementsSection" style="display: none;">
+      <div class="page-head">
+        <div>
+          <h2>📢 Broadcast Announcements</h2>
+          <p class="help">Post urgent updates. Announcements instantly display at the top of the Pharmacist and Health Worker portals.</p>
+        </div>
+      </div>
+
+      <!-- POST FORM -->
+      <div class="explanation-card" style="margin-bottom: 24px; background: #ffffff; border: 1px solid #e5e7eb;">
+        <h4 style="margin-top: 0; color: #111827;">Create New Announcement</h4>
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 12px;">
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Title</label>
+            <input id="annTitle" type="text" placeholder="e.g. Critical: Paracetamol Shortage" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box;" />
+          </div>
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px;">Message Details</label>
+            <textarea id="annBody" rows="3" placeholder="e.g. Please prioritize Amoxicillin allocation and notify barangay stations." style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; resize: vertical;"></textarea>
+          </div>
+          <div>
+            <button id="postAnnBtn" class="btn green" style="padding: 9px 18px;">Post Announcement</button>
+            <span id="annMsg" style="margin-left: 12px; font-size: 13px;"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAST ANNOUNCEMENTS LIST -->
+      <div class="table-card">
+        <div class="table-head">
+          <h3>Published Announcements</h3>
+          <span id="annCount" class="badge-tag badge-blue">0 posts</span>
+        </div>
+        <div id="annListContainer" style="padding: 16px;">
+          <p style="color: #6b7280;">Loading announcements...</p>
+        </div>
+      </div>
     </div>
   </main>
 
   <script>
+    // DOM Elements - Main
+    const msg = document.getElementById('msg');
+    const inventorySection = document.getElementById('inventorySection');
+    const reportsSection = document.getElementById('reportsSection');
+    const rolesSection = document.getElementById('rolesSection');
+    const announcementsSection = document.getElementById('announcementsSection');
+    const navInventory = document.getElementById('navInventory');
+    const navAlerts = document.getElementById('navAlerts');
+    const navReports = document.getElementById('navReports');
+    const navRoles = document.getElementById('navRoles');
+    const navAnnouncements = document.getElementById('navAnnouncements');
+
+    // DOM Elements - Inventory
     const tableBody = document.getElementById('tableBody');
     const alertList = document.getElementById('alertList');
     const searchBox = document.getElementById('searchBox');
-    const msg = document.getElementById('msg');
     const formCard = document.getElementById('formCard');
     const addBtn = document.getElementById('addBtn');
     const cancelBtn = document.getElementById('cancelBtn');
     const medicineForm = document.getElementById('medicineForm');
     const tableFooter = document.getElementById('tableFooter');
 
+    // DOM Elements - Reports
+    const reportTabBtns = document.querySelectorAll('.report-tab-btn');
+    const reportTitle = document.getElementById('reportTitle');
+    const reportMonkeyText = document.getElementById('reportMonkeyText');
+    const reportSql = document.getElementById('reportSql');
+    const reportTableHead = document.getElementById('reportTableHead');
+    const reportTableBody = document.getElementById('reportTableBody');
+    const reportTableFooter = document.getElementById('reportTableFooter');
+
+    // =========================================================================
+    // SECTION NAVIGATION LOGIC
+    // =========================================================================
+    function setView(viewName) {
+      // Hide all sections
+      inventorySection.style.display = 'none';
+      reportsSection.style.display = 'none';
+      rolesSection.style.display = 'none';
+      announcementsSection.style.display = 'none';
+
+      // Remove active states from nav
+      navInventory.classList.remove('active');
+      navAlerts.classList.remove('active');
+      navReports.classList.remove('active');
+      navRoles.classList.remove('active');
+      navAnnouncements.classList.remove('active');
+
+      if (viewName === 'inventory') {
+        inventorySection.style.display = 'block';
+        navInventory.classList.add('active');
+      } else if (viewName === 'alerts') {
+        inventorySection.style.display = 'block';
+        navAlerts.classList.add('active');
+        document.getElementById('alertsContainer').scrollIntoView({ behavior: 'smooth' });
+      } else if (viewName === 'reports') {
+        reportsSection.style.display = 'block';
+        navReports.classList.add('active');
+        loadReport('inner');
+      } else if (viewName === 'roles') {
+        rolesSection.style.display = 'block';
+        navRoles.classList.add('active');
+      } else if (viewName === 'announcements') {
+        announcementsSection.style.display = 'block';
+        navAnnouncements.classList.add('active');
+        loadDashboardAnnouncements();
+      }
+    }
+
+    navInventory.addEventListener('click', () => setView('inventory'));
+    navAlerts.addEventListener('click', () => setView('alerts'));
+    navReports.addEventListener('click', () => setView('reports'));
+    navRoles.addEventListener('click', () => setView('roles'));
+    navAnnouncements.addEventListener('click', () => setView('announcements'));
+
+    // =========================================================================
+    // FEEDBACK MESSAGE HELPERS
+    // =========================================================================
     function showMessage(text, type = 'error') {
       msg.textContent = text;
       msg.className = 'msg show ' + type;
@@ -177,12 +422,15 @@
       msg.className = 'msg';
     }
 
+    // =========================================================================
+    // INVENTORY CRUD
+    // =========================================================================
     function showForm() {
       formCard.style.display = 'block';
       formCard.dataset.mode = 'add';
       formCard.dataset.editId = '';
       document.querySelector('#formCard h3').textContent = 'Add New Medicine';
-      document.querySelector('#medicineForm button[type="submit"]').textContent = 'Save';
+      document.querySelector('#medicineForm button[type="submit"]').textContent = 'Save Medicine';
       medicineForm.reset();
       hideMessage();
     }
@@ -191,8 +439,6 @@
       formCard.style.display = 'none';
       formCard.dataset.mode = 'add';
       formCard.dataset.editId = '';
-      document.querySelector('#formCard h3').textContent = 'Add New Medicine';
-      document.querySelector('#medicineForm button[type="submit"]').textContent = 'Save';
       medicineForm.reset();
       hideMessage();
     }
@@ -210,12 +456,12 @@
         qtyOnHand: Number(document.getElementById('qtyOnHand').value),
         expiry: document.getElementById('expiry').value,
         reorderLevel: Number(document.getElementById('reorderLevel').value),
-        strength: 'N/A',
-        dosageForm: 'Tablet',
-        unit: 'pcs',
-        barangay: 'Central Health Center',
-        supplier: 'MedPharma Global',
-        unitCost: 0,
+        strength: document.getElementById('strength').value.trim() || 'N/A',
+        dosageForm: document.getElementById('dosageForm').value.trim() || 'Tablet',
+        unit: document.getElementById('unit').value.trim() || 'pcs',
+        barangay: document.getElementById('barangay').value.trim() || 'Central Health Center',
+        supplier: document.getElementById('supplier').value.trim() || 'MedPharma Global',
+        unitCost: Number(document.getElementById('unitCost').value) || 0,
       };
 
       if (!payload.medName || !payload.category || !payload.batchNo || !payload.expiry || isNaN(payload.qtyOnHand) || isNaN(payload.reorderLevel)) {
@@ -227,71 +473,91 @@
       const id = formCard.dataset.editId;
       const url = mode === 'PUT' ? '/api/data/' + id : '/api/data';
 
-      const res = await fetch(url, {
-        method: mode,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      try {
+        const res = await fetch(url, {
+          method: mode,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!res.ok) {
-        showMessage(data.message || 'Unable to save medicine.', 'error');
-        return;
+        if (!res.ok) {
+          showMessage(data.message || 'Unable to save medicine.', 'error');
+          return;
+        }
+
+        showMessage(mode === 'PUT' ? 'Medicine updated successfully.' : 'Medicine added successfully.', 'ok');
+        hideForm();
+        loadMedicines();
+        loadAlerts();
+      } catch (err) {
+        showMessage('Server connection error.', 'error');
       }
-
-      showMessage(mode === 'PUT' ? 'Medicine updated successfully.' : 'Medicine added successfully.', 'ok');
-      hideForm();
-      loadMedicines();
-      loadAlerts();
     });
 
     async function loadAlerts() {
-      const res = await fetch('/api/alerts');
-      const data = await res.json();
-      const alerts = data.alerts || [];
+      try {
+        const res = await fetch('/api/alerts');
+        const data = await res.json();
+        const alerts = data.alerts || [];
 
-      if (alerts.length === 0) {
-        alertList.innerHTML = '<li class="alert-item"><strong>No alerts.</strong> Everything looks okay.</li>';
-        return;
-      }
-
-      alertList.innerHTML = alerts.map(item => {
-        let type = 'Low Stock';
-
-        if (new Date(item.expiry_date) < new Date()) {
-          type = 'Expired';
+        if (alerts.length === 0) {
+          alertList.innerHTML = '<li class="alert-item"><strong>No alerts.</strong> All inventory levels are above reorder thresholds and not expired.</li>';
+          return;
         }
 
-        return '<li class="alert-item"><strong>' + type + ':</strong> ' + item.generic_name + ' (' + item.batch_no + ') - Qty: ' + item.qty_on_hand + ' - Expiry: ' + item.expiry_date + '</li>';
-      }).join('');
+        alertList.innerHTML = alerts.map(item => {
+          const isExpired = new Date(item.expiry_date) < new Date();
+          const badgeClass = isExpired ? 'badge-red' : 'badge-orange';
+          const type = isExpired ? 'EXPIRED' : 'LOW STOCK';
+
+          return `<li class="alert-item">
+            <span class="badge-tag ${badgeClass}">${type}</span>
+            <strong>${item.generic_name}</strong> (Batch: <code>${item.batch_no}</code>) —
+            Qty on hand: <strong>${item.qty_on_hand}</strong> (Reorder level: ${item.reorder_level}) —
+            Expiry: <strong>${item.expiry_date ? String(item.expiry_date).substring(0, 10) : 'N/A'}</strong>
+          </li>`;
+        }).join('');
+      } catch (err) {
+        console.error('Failed to load alerts', err);
+      }
     }
 
     async function loadMedicines() {
-      const res = await fetch('/api/data');
-      const data = await res.json();
-      const items = Array.isArray(data) ? data : (data.items || []);
+      try {
+        const res = await fetch('/api/data');
+        const data = await res.json();
+        const items = Array.isArray(data) ? data : (data.items || []);
 
-      tableFooter.textContent = items.length + ' medicines';
+        tableFooter.textContent = items.length + ' medicines registered';
 
-      tableBody.innerHTML = items.length
-        ? items.map(item => `
-          <tr>
-            <td>${item.id ?? ''}</td>
-            <td>${item.medName ?? ''}</td>
-            <td>${item.category ?? ''}</td>
-            <td>${item.batchNo ?? ''}</td>
-            <td>${item.qtyOnHand ?? ''}</td>
-            <td>${item.expiry ?? ''}</td>
-            <td>${item.reorderLevel ?? ''}</td>
-            <td class="actions">
-              <button class="btn outline small" data-id="${item.id ?? ''}" data-action="edit">Edit</button>
-              <button class="btn red small" data-id="${item.id ?? ''}" data-action="delete">Delete</button>
-            </td>
-          </tr>
-        `).join('')
-        : '<tr><td colspan="8" class="empty">No medicine found.</td></tr>';
+        tableBody.innerHTML = items.length
+          ? items.map(item => `
+            <tr>
+              <td>${item.id ?? ''}</td>
+              <td><strong>${item.medName ?? ''}</strong></td>
+              <td><span class="badge-tag badge-blue">${item.category ?? 'General'}</span></td>
+              <td>${item.barangay ?? 'Central'}</td>
+              <td><code>${item.batchNo ?? 'No batch'}</code></td>
+              <td><strong>${item.qtyOnHand ?? 0}</strong></td>
+              <td>${item.expiry ? String(item.expiry).substring(0, 10) : 'N/A'}</td>
+              <td>${item.reorderLevel ?? 0}</td>
+              <td class="actions">
+                <button class="btn outline small" data-id="${item.id ?? ''}" data-action="edit">Edit</button>
+                <button class="btn red small" data-id="${item.id ?? ''}" data-action="delete">Delete</button>
+              </td>
+            </tr>
+          `).join('')
+          : '<tr><td colspan="9" class="empty">No medicine found.</td></tr>';
 
+        attachActionListeners(items);
+      } catch (err) {
+        console.error('Failed to load medicines', err);
+      }
+    }
+
+    function attachActionListeners(items) {
       document.querySelectorAll('[data-action="edit"]').forEach(button => {
         button.addEventListener('click', function () {
           const id = this.dataset.id;
@@ -303,20 +569,25 @@
           document.getElementById('category').value = item.category || '';
           document.getElementById('batchNo').value = item.batchNo || '';
           document.getElementById('qtyOnHand').value = item.qtyOnHand || 0;
-          document.getElementById('expiry').value = item.expiry || '';
+          document.getElementById('expiry').value = item.expiry ? String(item.expiry).substring(0, 10) : '';
           document.getElementById('reorderLevel').value = item.reorderLevel || 0;
+          document.getElementById('strength').value = item.strength || 'N/A';
+          document.getElementById('dosageForm').value = item.dosageForm || 'Tablet';
+          document.getElementById('unit').value = item.unit || 'pcs';
+          document.getElementById('barangay').value = item.barangay || 'Central Health Center';
 
           formCard.dataset.mode = 'edit';
           formCard.dataset.editId = id;
-          document.querySelector('#formCard h3').textContent = 'Edit Medicine';
-          document.querySelector('#medicineForm button[type="submit"]').textContent = 'Update';
+          document.querySelector('#formCard h3').textContent = 'Edit Medicine Details';
+          document.querySelector('#medicineForm button[type="submit"]').textContent = 'Update Medicine';
+          formCard.scrollIntoView({ behavior: 'smooth' });
         });
       });
 
       document.querySelectorAll('[data-action="delete"]').forEach(button => {
         button.addEventListener('click', async function () {
           const id = this.dataset.id;
-          if (!id) return;
+          if (!id || !confirm('Are you sure you want to delete this medicine and all its batches?')) return;
 
           const res = await fetch('/api/data/' + id, { method: 'DELETE' });
           const data = await res.json();
@@ -340,7 +611,7 @@
       const items = Array.isArray(data) ? data : (data.items || []);
 
       const filtered = items.filter(item => {
-        const text = [item.medName, item.category, item.batchNo].join(' ').toLowerCase();
+        const text = [item.medName, item.category, item.batchNo, item.barangay].join(' ').toLowerCase();
         return text.includes(keyword);
       });
 
@@ -348,61 +619,254 @@
         ? filtered.map(item => `
           <tr>
             <td>${item.id ?? ''}</td>
-            <td>${item.medName ?? ''}</td>
-            <td>${item.category ?? ''}</td>
-            <td>${item.batchNo ?? ''}</td>
-            <td>${item.qtyOnHand ?? ''}</td>
-            <td>${item.expiry ?? ''}</td>
-            <td>${item.reorderLevel ?? ''}</td>
+            <td><strong>${item.medName ?? ''}</strong></td>
+            <td><span class="badge-tag badge-blue">${item.category ?? 'General'}</span></td>
+            <td>${item.barangay ?? 'Central'}</td>
+            <td><code>${item.batchNo ?? 'No batch'}</code></td>
+            <td><strong>${item.qtyOnHand ?? 0}</strong></td>
+            <td>${item.expiry ? String(item.expiry).substring(0, 10) : 'N/A'}</td>
+            <td>${item.reorderLevel ?? 0}</td>
             <td class="actions">
               <button class="btn outline small" data-id="${item.id ?? ''}" data-action="edit">Edit</button>
               <button class="btn red small" data-id="${item.id ?? ''}" data-action="delete">Delete</button>
             </td>
           </tr>
         `).join('')
-        : '<tr><td colspan="8" class="empty">No medicine found.</td></tr>';
+        : '<tr><td colspan="9" class="empty">No matching medicine found.</td></tr>';
 
-      document.querySelectorAll('[data-action="edit"]').forEach(button => {
-        button.addEventListener('click', function () {
-          const id = this.dataset.id;
-          const item = filtered.find(row => String(row.id) === String(id));
-          if (!item) return;
+      attachActionListeners(filtered);
+    });
 
-          formCard.style.display = 'block';
-          document.getElementById('medName').value = item.medName || '';
-          document.getElementById('category').value = item.category || '';
-          document.getElementById('batchNo').value = item.batchNo || '';
-          document.getElementById('qtyOnHand').value = item.qtyOnHand || 0;
-          document.getElementById('expiry').value = item.expiry || '';
-          document.getElementById('reorderLevel').value = item.reorderLevel || 0;
+    // =========================================================================
+    // SQL JOIN REPORTS ENGINE
+    // =========================================================================
+    const reportConfigs = {
+      inner: {
+        title: 'INNER JOIN — Medicines with Categories',
+        monkey: '🐒 Simple Monkey Explanation: INNER JOIN is the picky join! It ONLY returns rows where the key matches in BOTH tables. If a medicine has a valid category_id matching medicine_categories, it shows up. If not, it is ignored.',
+        endpoint: '/api/joined-medicines',
+        sql: `SELECT m.medicine_id AS id, m.generic_name AS medName, m.strength, c.category_name AS category
+FROM medicines m
+INNER JOIN medicine_categories c ON c.category_id = m.category_id
+ORDER BY m.medicine_id ASC;`,
+        headers: ['Medicine ID', 'Generic Name', 'Strength', 'Category Name (Joined)'],
+        renderRow: item => `
+          <tr>
+            <td>${item.id || item.medicine_id || ''}</td>
+            <td><strong>${item.generic_name || item.medName || ''}</strong></td>
+            <td>${item.strength || 'N/A'}</td>
+            <td><span class="badge-tag badge-blue">${item.category || ''}</span></td>
+          </tr>
+        `
+      },
+      left: {
+        title: 'LEFT JOIN — Medicines with Missing / Zero Batches',
+        monkey: '🐒 Simple Monkey Explanation: LEFT JOIN keeps EVERYTHING from the left table (medicines). If a medicine has no stock batches at all on the right table (b.batch_id IS NULL), it still appears! This identifies unstocked medicines.',
+        endpoint: '/api/reports/missing-batches',
+        sql: `SELECT m.medicine_id, m.generic_name, b.batch_id, b.batch_no
+FROM medicines m
+LEFT JOIN medicine_batches b ON b.medicine_id = m.medicine_id
+WHERE b.batch_id IS NULL
+ORDER BY m.medicine_id ASC;`,
+        headers: ['Medicine ID', 'Generic Name', 'Batch ID (Right Table)', 'Status'],
+        renderRow: item => `
+          <tr>
+            <td>${item.medicine_id || item.id || ''}</td>
+            <td><strong>${item.generic_name || item.medName || ''}</strong></td>
+            <td><em>NULL (No Batch Record)</em></td>
+            <td><span class="badge-tag badge-red">UNSTOCKED / MISSING BATCH</span></td>
+          </tr>
+        `
+      },
+      right: {
+        title: 'RIGHT JOIN — All Barangay Health Stations & Their Stock Batches',
+        monkey: '🐒 Simple Monkey Explanation: RIGHT JOIN keeps EVERYTHING from the right table (health_stations), even if the left table (medicine_batches) has nothing! Notice how North Sub-Station and Valencia show up even with NULL medicine batches.',
+        endpoint: '/api/reports/right-join',
+        sql: `SELECT hs.station_id, hs.station_name, hs.address, mb.batch_no, m.generic_name, mb.qty_on_hand
+FROM medicine_batches mb
+RIGHT JOIN health_stations hs ON hs.station_id = mb.station_id
+LEFT JOIN medicines m ON m.medicine_id = mb.medicine_id
+ORDER BY hs.station_id ASC;`,
+        headers: ['Station ID', 'Barangay Health Station (Right Table)', 'Address', 'Batch No (Left)', 'Medicine Name', 'Stock Qty'],
+        renderRow: item => `
+          <tr>
+            <td>${item.stationId || ''}</td>
+            <td><strong>${item.stationName || ''}</strong></td>
+            <td>${item.address || 'N/A'}</td>
+            <td>${item.batchNo ? '<code>' + item.batchNo + '</code>' : '<span class="badge-tag badge-orange">NULL (No Batches)</span>'}</td>
+            <td>${item.medName || '<em>None stationed</em>'}</td>
+            <td>${item.qtyOnHand !== null ? item.qtyOnHand : '<span style="color:#999;">NULL</span>'}</td>
+          </tr>
+        `
+      },
+      outer: {
+        title: 'FULL OUTER JOIN (Simulated via UNION) — All Medicines & All Batches',
+        monkey: '🐒 Simple Monkey Explanation: FULL OUTER JOIN keeps EVERYTHING from BOTH tables! Since MySQL doesn’t have a native FULL OUTER JOIN keyword, we combine a LEFT JOIN and a RIGHT JOIN using UNION. No data is lost from either side.',
+        endpoint: '/api/reports/full-outer-medicines',
+        sql: `SELECT m.medicine_id, m.generic_name, mb.batch_no, mb.qty_on_hand, mb.expiry_date
+FROM medicines m
+LEFT JOIN medicine_batches mb ON mb.medicine_id = m.medicine_id
 
-          formCard.dataset.mode = 'edit';
-          formCard.dataset.editId = id;
-          document.querySelector('#formCard h3').textContent = 'Edit Medicine';
-          document.querySelector('#medicineForm button[type="submit"]').textContent = 'Update';
-        });
+UNION
+
+SELECT m.medicine_id, m.generic_name, mb.batch_no, mb.qty_on_hand, mb.expiry_date
+FROM medicines m
+RIGHT JOIN medicine_batches mb ON mb.medicine_id = m.medicine_id
+ORDER BY medicine_id ASC;`,
+        headers: ['Medicine ID', 'Generic Name', 'Batch Number', 'Qty on Hand', 'Batch Expiration Date'],
+        renderRow: item => `
+          <tr>
+            <td>${item.id || item.medicine_id || '<em>NULL</em>'}</td>
+            <td><strong>${item.medName || item.generic_name || '<em>Unassigned Batch</em>'}</strong></td>
+            <td>${item.batchNo ? '<code>' + item.batchNo + '</code>' : '<em>NULL (No Batch)</em>'}</td>
+            <td>${item.qtyOnHand !== null ? item.qtyOnHand : '<em>NULL</em>'}</td>
+            <td>${item.expiry ? String(item.expiry).substring(0, 10) : '<em>NULL</em>'}</td>
+          </tr>
+        `
+      }
+    };
+
+    async function loadReport(reportKey) {
+      const config = reportConfigs[reportKey];
+      if (!config) return;
+
+      reportTabBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.report === reportKey);
       });
 
-      document.querySelectorAll('[data-action="delete"]').forEach(button => {
-        button.addEventListener('click', async function () {
-          const id = this.dataset.id;
-          if (!id) return;
+      reportTitle.textContent = config.title;
+      reportMonkeyText.textContent = config.monkey;
+      reportSql.textContent = config.sql;
+      reportTableHead.innerHTML = '<tr>' + config.headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+      reportTableBody.innerHTML = '<tr><td colspan="' + config.headers.length + '" class="empty">Loading report data...</td></tr>';
 
-          const res = await fetch('/api/data/' + id, { method: 'DELETE' });
-          const data = await res.json();
+      try {
+        const res = await fetch(config.endpoint);
+        const data = await res.json();
+        const items = data.items || [];
 
-          if (!res.ok) {
-            showMessage(data.message || 'Unable to delete medicine.', 'error');
-            return;
-          }
+        reportTableFooter.textContent = items.length + ' rows returned by ' + config.title.split('—')[0];
 
-          showMessage('Medicine deleted successfully.', 'ok');
-          loadMedicines();
-          loadAlerts();
-        });
+        if (items.length === 0) {
+          reportTableBody.innerHTML = '<tr><td colspan="' + config.headers.length + '" class="empty">No records matched the criteria.</td></tr>';
+          return;
+        }
+
+        reportTableBody.innerHTML = items.map(config.renderRow).join('');
+      } catch (err) {
+        reportTableBody.innerHTML = '<tr><td colspan="' + config.headers.length + '" class="empty">Error loading report data.</td></tr>';
+      }
+    }
+
+    reportTabBtns.forEach(btn => {
+      btn.addEventListener('click', function () {
+        loadReport(this.dataset.report);
       });
     });
 
+    // =========================================================================
+    // ANNOUNCEMENTS LOGIC
+    // =========================================================================
+    const annTitle = document.getElementById('annTitle');
+    const annBody = document.getElementById('annBody');
+    const postAnnBtn = document.getElementById('postAnnBtn');
+    const annMsg = document.getElementById('annMsg');
+    const annCount = document.getElementById('annCount');
+    const annListContainer = document.getElementById('annListContainer');
+
+    async function loadDashboardAnnouncements() {
+      try {
+        const res = await fetch('/api/announcements');
+        const data = await res.json();
+        const items = data.items || [];
+
+        annCount.textContent = items.length + ' posts';
+
+        if (items.length === 0) {
+          annListContainer.innerHTML = '<p style="color: #6b7280; margin: 0;">No announcements posted yet. Broadcast your first message above!</p>';
+          return;
+        }
+
+        annListContainer.innerHTML = items.map(a => `
+          <div style="border-bottom: 1px solid #f3f4f6; padding: 12px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="font-size: 15px; color: #111827;">${a.title}</strong>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <small style="color: #9ca3af;">${a.createdAt ? new Date(a.createdAt).toLocaleString() : ''}</small>
+                <button class="btn red small delete-ann-btn" data-id="${a.id}" style="padding: 4px 10px; font-size: 12px;">Delete</button>
+              </div>
+            </div>
+            <p style="margin: 6px 0 4px; color: #4b5563; font-size: 14px;">${a.body}</p>
+            <small style="color: #6b7280;">Posted by: <em>${a.postedBy || 'Admin'}</em></small>
+          </div>
+        `).join('');
+
+        // Attach click listener for delete buttons
+        annListContainer.querySelectorAll('.delete-ann-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = btn.getAttribute('data-id');
+            if (!confirm('Are you sure you want to delete this announcement?')) return;
+            try {
+              const delRes = await fetch(`/api/announcements/${id}`, { method: 'DELETE' });
+              const delData = await delRes.json();
+              if (!delRes.ok || !delData.success) {
+                alert(delData.message || 'Could not delete announcement.');
+                return;
+              }
+              loadDashboardAnnouncements();
+            } catch (err) {
+              alert('Network error while deleting announcement.');
+            }
+          });
+        });
+      } catch (err) {
+        annListContainer.innerHTML = '<p style="color: #ef4444;">Failed to load announcements.</p>';
+      }
+    }
+
+    postAnnBtn.addEventListener('click', async function () {
+      const title = annTitle.value.trim();
+      const body = annBody.value.trim();
+
+      if (!title || !body) {
+        annMsg.textContent = 'Please enter both a title and message.';
+        annMsg.style.color = '#ef4444';
+        return;
+      }
+
+      try {
+        postAnnBtn.disabled = true;
+        postAnnBtn.textContent = 'Posting...';
+        annMsg.textContent = '';
+
+        const res = await fetch('/api/announcements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, body, posted_by: 1 })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to post.');
+        }
+
+        annMsg.textContent = '✅ Announcement published!';
+        annMsg.style.color = '#10b981';
+        annTitle.value = '';
+        annBody.value = '';
+
+        loadDashboardAnnouncements();
+      } catch (err) {
+        annMsg.textContent = err.message || 'Error posting announcement.';
+        annMsg.style.color = '#ef4444';
+      } finally {
+        postAnnBtn.disabled = false;
+        postAnnBtn.textContent = 'Post Announcement';
+      }
+    });
+
+    // Initial load
     loadAlerts();
     loadMedicines();
   </script>

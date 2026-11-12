@@ -1,9 +1,3 @@
-// =============================================================================
-// dispensingController.js - Dispensing Management Controller
-// =============================================================================
-// Handles patient dispensing and barangay distribution requests.
-// =============================================================================
-
 const model = require('../models/dispensingModel');
 const { getAllHealthStations } = require('../models/stationModel');
 const { getAllPatients } = require('../models/patientModel');
