@@ -533,9 +533,9 @@
         tableFooter.textContent = items.length + ' medicines registered';
 
         tableBody.innerHTML = items.length
-          ? items.map(item => `
+          ? items.map((item, index) => `
             <tr>
-              <td>${item.id ?? ''}</td>
+              <td>${index + 1}</td>
               <td><strong>${item.medName ?? ''}</strong></td>
               <td><span class="badge-tag badge-blue">${item.category ?? 'General'}</span></td>
               <td>${item.barangay ?? 'Central'}</td>
@@ -616,9 +616,9 @@
       });
 
       tableBody.innerHTML = filtered.length
-        ? filtered.map(item => `
+        ? filtered.map((item, index) => `
           <tr>
-            <td>${item.id ?? ''}</td>
+            <td>${index + 1}</td>
             <td><strong>${item.medName ?? ''}</strong></td>
             <td><span class="badge-tag badge-blue">${item.category ?? 'General'}</span></td>
             <td>${item.barangay ?? 'Central'}</td>

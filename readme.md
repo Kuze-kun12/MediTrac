@@ -1,293 +1,224 @@
-# MediTrac v2 — Barangay Health Center Medicine Inventory & Dispensing System
+# MediTrac — Barangay Health Center Medicine Inventory & Dispensing System (DBMS & SIA)
 
-> **Courses:** Database Management Systems 1 (DBMS 1) & Systems Integration and Architecture (SIA)  
-> **Curriculum Track:** Merged Track (Combined Database & Node.js MVC REST API Defense)  
-> **Team:** Group 4, Section B  
-> **Repository:** [https://github.com/Kuze-kun12/MediTrac](https://github.com/Kuze-kun12/MediTrac)
+A web system for managing medicine inventory and patient dispensing across municipal health units and barangay satellite stations. A dispensing is only accepted if the medicine batch has sufficient stock, has not passed its expiration date, and is recorded under atomic transaction integrity.
 
----
+**Major feature:** Automated First-Expired, First-Out (FEFO) batch prioritization across satellite stations with real-time stock deductions, safety-stock reorder thresholds, and automated expired-batch quarantine alerts.
 
-## 1. System Overview & Problem Statement
-
-Public health stations and barangay clinics frequently face medicine wastage, expired stock distribution, and unrecorded inventory disbursements due to manual record-keeping. **MediTrac** is a centralized, role-based medicine inventory and dispensing management system built for municipal health units and barangay health sub-stations.
-
-### Key Capabilities:
-- **Role-Based Portals**: Tailored interfaces for Administrators, Pharmacists, and Barangay Health Workers.
-- **Batch & Expiry Tracking**: Multi-batch inventory tracking per generic medicine with individual batch numbers and expiration dates.
-- **Barangay Station Allocation**: Tracking and disbursement across multiple satellite health stations.
-- **Audit & Dispensing Logs**: Comprehensive records tracking which health center and patient received each medicine batch.
+**Stack:** Node.js + Express (MVC REST API), MySQL (`mysql2/promise`), plain HTML5/CSS3/Vanilla JS
 
 ---
 
-## 2. Unique Major Feature: Automated FEFO & Safety-Stock Alert Engine
+## Group roster and ownership matrix
 
-As required by Section 2 of the Project Guidelines, MediTrac moves beyond generic CRUD through an automated domain-specific workflow: **First-Expired, First-Out (FEFO) Batch Prioritization with Real-Time Expiry & Safety-Stock Alert Rules**.
-
-```mermaid
-flowchart TD
-    A[Prescription / Dispensing Request] --> B[Fetch Batches Ordered by Expiry Date ASC - FEFO]
-    B --> C{Earliest Batch has Qty?}
-    C -->|Yes| D[Allocate Earliest Expiring Batch]
-    C -->|No / Depleted| E[Advance to Next Expiring Batch]
-    D --> F[Atomic Stock Deduction]
-    F --> G[Log Dispensing Item & Record]
-    G --> H{Stock <= Reorder Level OR Expiry < CURDATE?}
-    H -->|Triggered| I[Generate Inventory Alert]
-    H -->|OK| J[Normal Inventory State]
-```
-
-### Self-Check Validation:
-1. **Applies domain business rules?** Yes. Dispensing is governed by the FEFO algorithm, strictly allocating the nearest-expiring batches before newer stock.
-2. **Automated actions?** Yes. The system automatically scans batch expiration dates and safety reorder thresholds on queries to dynamically trigger **Expired** and **Low Stock** alerts.
-3. **Testable with tricky edge cases?** Yes. Tested when multiple batches exist for the same medicine across different health stations, and when a batch reaches zero quantity.
-4. **Essential to the domain?** Yes. Removing this logic would convert the clinic safety system into an unmonitored generic table.
-
----
-
-## 3. Architecture & File Structure
-
-The project implements a **Layered MVC Architecture (Package-by-Layer)** with strict separation of concerns across the presentation, routing, application controller, and database access layers.
-
-```
-MediTrac v2/
-├── backend/
-│   ├── config/
-│   │   └── db.js                 # MySQL connection pool configuration (mysql2/promise)
-│   ├── controllers/
-│   │   ├── authController.js     # Authentication, credentials verification, redirects
-│   │   ├── dispensingController.js# Dispensing transactions, batch deductions, dispensing log
-│   │   ├── medicineController.js # Medicine inventory CRUD, FEFO order, alerts
-│   │   ├── patientController.js  # Patient registration and demographic records
-│   │   └── stationController.js  # Barangay health station directory
-│   ├── models/
-│   │   ├── authModel.js          # User queries and role lookup
-│   │   ├── dispensingModel.js    # Dispensing transactions, stock updates, log joins
-│   │   ├── medicineModel.js      # Medicine queries, joins (INNER, LEFT, FULL OUTER), batch management
-│   │   ├── patientModel.js       # Patient data access queries
-│   │   └── stationModel.js       # Health station data queries
-│   ├── routes/
-│   │   ├── authRoutes.js         # POST /login
-│   │   ├── dispensingRoutes.js   # GET & POST /api/dispensing-*
-│   │   ├── medicineRoutes.js     # GET, POST, PUT, DELETE /api/data, /api/alerts, /api/fefo
-│   │   ├── patientRoutes.js      # GET & POST /api/patients
-│   │   └── stationRoutes.js      # GET /api/health-stations
-│   ├── utils/
-│   │   └── response.js           # Standard JSON response helpers: ok() and bad()
-│   └── server.js                 # Express server bootstrap, static files & route registration
-├── frontend/
-│   ├── css/
-│   │   └── style.css             # Shared responsive CSS design system
-│   ├── dashboard.html            # Admin Portal: Inventory CRUD, alert monitoring, search
-│   ├── healthworker.html         # Health Worker Portal: Read-only inventory & active warnings
-│   ├── index.html                # Login Gateway & role-based routing
-│   └── pharmacist.html           # Pharmacist Portal: Dispensing interface & distribution logs
-├── utilities/
-│   ├── git-semantic-push.sh      # Git helper script for semantic commit enforcement
-│   └── usefull_utility.md        # Branching and Git guidelines
-├── er_diagram.drawio             # Entity-Relationship diagram in draw.io format
-├── query.sql                     # DDL Schema definitions (tables, constraints, foreign keys)
-├── insert_table.sql              # Seed SQL data (roles, users, sample inventory, stations)
-├── package.json                  # Node.js project manifest & dependencies
-└── README.md                     # Comprehensive project documentation
-```
-
-### Architectural Layer Responsibilities:
-
-* **Routing Layer (`routes/`)**: Maps incoming HTTP request verbs (`GET`, `POST`, `PUT`, `DELETE`) and URLs to controller handlers.
-* **Controller Layer (`controllers/`)**: Normalizes request payloads, validates input formats, handles HTTP status codes (`200`, `201`, `400`, `401`, `500`), and forwards work to Models.
-* **Model Layer (`models/`)**: Transport-agnostic data access layer running parameterized SQL queries, joins, and transactional database integrity checks.
-* **View / Client Layer (`frontend/`)**: Static HTML5/CSS3/Vanilla JS consuming JSON APIs with dynamic DOM rendering and user feedback.
-
----
-
-## 4. Group Roster & Section 5.4 Ownership Matrix
-
-In compliance with **Section 5.4** of the project guidelines, each group member takes end-to-end ownership of a vertical slice (Database Tables, Model, Controller, Route, Frontend Screen, and SQL Join Report):
-
-| Member | GitHub Username | Tables Owned | Endpoints / Screens | Join Report & Type | Feature Role |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Raul A. Generoso III** (Lead) | `Kuze-kun12` | `medicines`, `medicine_batches` | `GET /api/data`<br>`POST /api/data`<br>`PUT /api/data/:id`<br>`DELETE /api/data/:id`<br>`dashboard.html` | **FULL OUTER JOIN (Simulated)**:<br>Medicines and Batches with UNION | Core Inventory & Medicine CRUD |
-| **Jero Erwin Lombrio** | `zezktokam69` | `dispensing_records`, `dispensing_items` | `GET /api/dispensing-records`<br>`POST /api/dispensing-records`<br>`pharmacist.html` | **INNER JOIN**:<br>Dispensing logs with batches and stations | Dispensing Transactions & Stock Deductions |
-| **Xian Xavier C. Tinio** | `TinZ` | `alerts`, `adjustment_reasons`, `stock_movements` | `GET /api/alerts`<br>`GET /api/fefo`<br>`healthworker.html` | **LEFT JOIN**:<br>Medicines with missing batches / unstocked items | FEFO Algorithm & Stock Alert Engine |
-| **Decirie Bulata** | `deciriebulata28` | `patients`, `health_stations` | `GET /api/patients`<br>`POST /api/patients`<br>`GET /api/health-stations`<br>`GET /api/reports/right-join` | **RIGHT JOIN**:<br>All Health Stations & stationed batches (showing unmatched as NULL) | Patient Records & Health Station Directory |
-| **Fea Ann Villarba** | `feaann` | `users`, `roles`, `suppliers`, `medicine_categories` | `POST /login`<br>`GET /api/joined-medicines`<br>`index.html` | **INNER JOIN**:<br>Medicines joined with Categories & Suppliers | User Authentication & Master Lookup Data |
-
----
-
-## 5. Database Design & SQL Join Reports (DBMS 1)
-
-The database schema is normalized and contains **14 tables** (exceeding the 10+ table requirement for 5 members), with primary keys and foreign key constraints strictly enforced.
-
-```mermaid
-erDiagram
-    roles ||--o{ users : "assigned to"
-    health_stations ||--o{ users : "stationed at"
-    health_stations ||--o{ medicine_batches : "stored at"
-    medicine_categories ||--o{ medicines : "categorizes"
-    suppliers ||--o{ medicine_batches : "supplied by"
-    medicines ||--o{ medicine_batches : "has batches"
-    patients ||--o{ dispensing_records : "receives"
-    users ||--o{ dispensing_records : "dispenses"
-    health_stations ||--o{ dispensing_records : "dispensed from"
-    dispensing_records ||--o{ dispensing_items : "contains"
-    medicine_batches ||--o{ dispensing_items : "deducted from"
-    medicines ||--o{ dispensing_items : "references"
-    purchase_orders ||--o{ purchase_order_items : "contains"
-    medicines ||--o{ purchase_order_items : "ordered for"
-    adjustment_reasons ||--o{ stock_movements : "justifies"
-    medicine_batches ||--o{ stock_movements : "adjusts"
-    medicines ||--o{ alerts : "triggers"
-    medicine_batches ||--o{ alerts : "batch alerts"
-```
-
-### Required SQL Join Implementations:
-
-1. **INNER JOIN** (`GET /api/joined-medicines`):
-   ```sql
-   SELECT m.medicine_id, m.generic_name, m.strength, c.category_name AS category
-   FROM medicines m
-   INNER JOIN medicine_categories c ON c.category_id = m.category_id
-   ORDER BY m.medicine_id;
-   ```
-2. **LEFT JOIN** (Checking medicines with no existing stock batch):
-   ```sql
-   SELECT m.medicine_id, m.generic_name, b.batch_id, b.batch_no
-   FROM medicines m
-   LEFT JOIN medicine_batches b ON b.medicine_id = m.medicine_id
-   WHERE b.batch_id IS NULL
-   ORDER BY m.medicine_id;
-   ```
-3. **FULL OUTER JOIN (Simulated via UNION for MySQL)**:
-   ```sql
-   SELECT m.medicine_id, m.generic_name, b.batch_no, b.expiry_date
-   FROM medicines m
-   LEFT JOIN medicine_batches b ON b.medicine_id = m.medicine_id
-   UNION
-   SELECT m.medicine_id, m.generic_name, b.batch_no, b.expiry_date
-   FROM medicines m
-   RIGHT JOIN medicine_batches b ON b.medicine_id = m.medicine_id
-   ORDER BY medicine_id, batch_no;
-   ```
-4. **RIGHT JOIN** (`GET /api/reports/right-join`):
-   ```sql
-   SELECT hs.station_id, hs.station_name, hs.address, b.batch_no, m.generic_name, b.qty_on_hand
-   FROM medicine_batches b
-   RIGHT JOIN health_stations hs ON hs.station_id = b.station_id
-   LEFT JOIN medicines m ON m.medicine_id = b.medicine_id
-   ORDER BY hs.station_id ASC;
-   ```
-
----
-
-## 6. REST API Endpoints (SIA)
-
-All API endpoints follow RESTful standards and return standardized JSON envelopes:
-* **Success**: `{ success: true, ...data }`
-* **Error**: `{ success: false, message: "..." }`
-
-| Method | Endpoint | Description | Request Body | Status Codes |
+| Member | GitHub username | Tables | Endpoints | Feature role |
 | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/login` | Authenticate user and return portal redirect | `{ username, password }` | `200`, `400`, `401`, `500` |
-| `GET` | `/api/data` | Retrieve all medicines with category and active batch | _None_ | `200`, `500` |
-| `POST` | `/api/data` | Create a new generic medicine and initial batch | `{ generic_name, batch_no, expiry_date, qty_on_hand, ... }` | `201`, `400`, `500` |
-| `PUT` | `/api/data/:id` | Update medicine specifications and batch info | `{ generic_name, strength, dosage_form, unit, ... }` | `200`, `400`, `500` |
-| `DELETE` | `/api/data/:id` | Cascading transactional deletion of medicine & records | _None_ | `200`, `400`, `500` |
-| `GET` | `/api/alerts` | Get batches triggering expiry or reorder thresholds | _None_ | `200`, `500` |
-| `GET` | `/api/fefo` | Get batch inventory prioritized by earliest expiry | _None_ | `200`, `500` |
-| `GET` | `/api/patients` | Retrieve patient directory | _None_ | `200`, `500` |
-| `POST` | `/api/patients` | Register new patient demographic record | `{ full_name, birthdate, purok, contact }` | `201`, `400`, `500` |
-| `GET` | `/api/health-stations`| List registered barangay health units | _None_ | `200`, `500` |
-| `GET` | `/api/dispensing-options`| Get health stations, registered patients & available batches | _None_ | `200`, `500` |
-| `GET` | `/api/dispensing-records`| Retrieve recent patient & barangay dispensing log entries | _None_ | `200`, `500` |
-| `POST` | `/api/dispensing-records`| Record distribution to patient/barangay and deduct batch stock | `{ station_id, batch_id, qty, patient_id, patient_name }` | `201`, `400`, `500` |
-| `GET` | `/api/barangay-summary`| Summary of medicine distributions per barangay station | _None_ | `200`, `500` |
-| `GET` | `/api/joined-medicines` | Report endpoint demonstrating INNER JOIN | _None_ | `200`, `500` |
-| `GET` | `/api/reports/missing-batches` | Report endpoint demonstrating LEFT JOIN | _None_ | `200`, `500` |
-| `GET` | `/api/reports/right-join` | Report endpoint demonstrating RIGHT JOIN | _None_ | `200`, `500` |
-| `GET` | `/api/reports/full-outer-medicines` | Report endpoint demonstrating FULL OUTER JOIN (UNION) | _None_ | `200`, `500` |
-| `DELETE` | `/api/data/:id` | Cascading transactional deletion of medicine & records | _None_ | `200`, `400`, `500` |
-| `GET` | `/api/alerts` | Get batches triggering expiry or reorder thresholds | _None_ | `200`, `500` |
-| `GET` | `/api/fefo` | Get batch inventory prioritized by earliest expiry | _None_ | `200`, `500` |
-| `GET` | `/api/patients` | Retrieve patient directory | _None_ | `200`, `500` |
-| `POST` | `/api/patients` | Register new patient demographic record | `{ full_name, birthdate, purok, contact }` | `201`, `400`, `500` |
-| `GET` | `/api/health-stations`| List registered barangay health units | _None_ | `200`, `500` |
-| `GET` | `/api/dispensing-options`| Get health stations & available batches with stock | _None_ | `200`, `500` |
-| `GET` | `/api/dispensing-records`| Retrieve recent dispensing log entries | _None_ | `200`, `500` |
-| `POST` | `/api/dispensing-records`| Record distribution to patient and deduct batch stock | `{ station_id, batch_id, qty, patient_name }` | `201`, `400`, `500` |
-| `GET` | `/api/joined-medicines` | Report endpoint demonstrating INNER JOIN | _None_ | `200`, `500` |
+| **Raul A. Generoso III** | `Kuze-kun12` | `users`, `roles`, `announcements` | `POST /login`, `GET/POST/DELETE /api/announcements` | Core Authentication + Announcements; shared frontend owner |
+| **Fea Ann Villarba** | `feaann` | `dispensing_records`, `dispensing_items` | `GET /api/dispensing-options`, `GET /api/dispensing-records`, `POST /api/dispensing-records`, `GET /api/barangay-summary` | Dispensing Transactions |
+| **Tinio** | `TinZ` | `medicines`, `medicine_batches`, `stock_movements` | `GET /api/data`, `POST /api/data`, `PUT /api/data/:id`, `DELETE /api/data/:id`, `GET /api/alerts`, `GET /api/fefo`, `GET /api/joined-medicines`, `GET /api/reports/missing-batches`, `GET /api/reports/full-outer-medicines` | Medicine Inventory & Batch Management |
+| **Bulata** | `bulata` | `patients`, `health_stations` | `GET /api/patients`, `GET /api/patients/:id`, `POST /api/patients`, `PUT /api/patients/:id`, `DELETE /api/patients/:id`, `GET /api/health-stations`, `GET /api/reports/right-join` | Patient Records & Health Station Directory |
+| **Jero** | `zezktokam69` | `stations` | `GET /api/health-stations` | Station Management |
+| **Remollo** | `ermico-remollo` | `database schema`, `ERD design`, `entity relationships` | `schema`, `query.sql`, `insert_table.sql`, `meditrac.drawio` | Database Design & ER Diagram |
+| **Janio** | `lea-janio` | `database schema`, `ERD design`, `entity relationships` | `schema`, `query.sql`, `insert_table.sql`, `meditrac.drawio` | Database Design & ER Diagram |
+
+**Total:** 7 assigned feature slices.  
+**Core responsibility:** Raul owns the system core, authentication, announcement endpoints, and the shared frontend across the project.  
+**Ownership per module:**
+- `authModel.js` + authentication flow + `announcementRoutes.js` = Raul
+- `dispensingController.js` + `dispensingModel.js` + `dispensingRoutes.js` = Fea
+- `medicineController.js` + `medicineModel.js` + `medicineRoutes.js` = TinZ
+- `patientController.js` + `patientModel.js` + `patientRoutes.js` = Bulata
+- `stationController.js` + `stationModel.js` + `stationRoutes.js` = Jero
+- `query.sql` + `insert_table.sql` + ER diagram design = Ermico Remollo + Lea Janio
+
+**Frontend note:** All UI pages are created and maintained by Raul, while backend modules remain assigned to their respective team members.
 
 ---
 
-## 7. Setup & Installation Guide
+## ER diagram & Architecture Diagrams
 
-### Prerequisites
-- **Node.js** (v18.0.0 or higher recommended)
-- **MySQL Server** (v8.0 or MariaDB 10.4+)
-- **Git**
+- **Interactive Multi-Page Draw.io Files:**
+  - [`system_architecture.drawio`](system_architecture.drawio) — Contains 5 tabs:
+    1. *Master Overview (Donkey-Simple System Explanation)*
+    2. *MVC Architecture Explained (The Restaurant Analogy vs MediTrac)*
+    3. *8-Step Request Flow (Dispensing Medicine end-to-end)*
+    4. *FEFO & Safety Alert Engine (Business Rules & Edge Cases)*
+    5. *16-Table Relational ER Diagram*
+  - [`meditrac.drawio`](meditrac.drawio) — Complete course workbook file with all diagrams and database ERD.
+- **ER Diagram Visual:** [`meditrac.png`](meditrac.png)
 
-### Step 1: Clone Repository
-```bash
-git clone https://github.com/Kuze-kun12/MediTrac.git
-cd MediTrac
-```
+---
 
-### Step 2: Install Node Dependencies
-```bash
-npm install
-```
+## Setup (every member)
 
-### Step 3: Database Setup
-1. Open MySQL workbench, phpMyAdmin, or your terminal MySQL client:
+1. Install **Node.js** (v18 or newer; v22/24 LTS recommended), **MySQL Server**, and **MySQL Workbench**.
+2. Run `npm install` in the project root.
+3. Copy `.env.example` to `.env` and set `DB_PASSWORD` to your own local MySQL root password. Never commit `.env`.
    ```bash
-   mysql -u root -p
+   cp .env.example .env        # Windows: copy .env.example .env
    ```
-2. Create the database:
-   ```sql
-   CREATE DATABASE Meditrac;
-   USE Meditrac;
-   ```
-3. Import the table schema:
+4. Build the database from `query.sql` and `insert_table.sql`:
    ```bash
+   mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS Meditrac;"
    mysql -u root -p Meditrac < query.sql
-   ```
-4. Import seed records and test data:
-   ```bash
    mysql -u root -p Meditrac < insert_table.sql
    ```
+5. `npm start`, then open `http://localhost:3000` in your browser.
+6. Demo logins:
+   - **Administrator:** `admin_jane` / `pass123`
+   - **Pharmacist:** `pharma_john` / `pass123`
+   - **Health Worker:** `worker_sarah` / `pass123`
 
-### Step 4: Environment Configuration
-Create a `.env` file in the root directory (based on `.env.example`):
-```env
-PORT=3000
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=root
-DB_NAME=Meditrac
-```
+---
 
-### Step 5: Start the Server
+## Rules
+
+- Work on your own branch (for example `feature/member-c-dispensing`) and open a pull request into `main`.
+- Only edit your own slice's files. Consult the group lead (`Kuze-kun12`) before touching `backend/config/db.js`, `query.sql`, `insert_table.sql`, or `backend/server.js`.
+- Models must use `async/await` with parameterized queries (`db.query('SELECT ... WHERE id = ?', [id])` via `mysql2/promise`). Never use raw string interpolation to prevent SQL injection.
+- After anyone changes `query.sql` or `insert_table.sql`, everyone pulls and re-runs the database import scripts.
+
+---
+
+## How to run
+
+Requires **Node.js 18.0 or newer** (Node 22 LTS recommended).
+
 ```bash
-npm start
+# 1. Install dependencies
+npm install
+
+# 2. Setup environment variables
+cp .env.example .env          # Windows CMD: copy .env.example .env
+
+# 3. Import schema and seed data into MySQL
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS Meditrac;"
+mysql -u root -p Meditrac < query.sql
+mysql -u root -p Meditrac < insert_table.sql
+
+# 4. Start the application
+npm start                     # Runs Express on http://localhost:3000
 ```
-The server will start at: `http://localhost:3000`
+
+**Demo logins:**
+- `admin_jane` / `pass123` (Admin Portal: `dashboard.html`)
+- `pharma_john` / `pass123` (Pharmacist Portal: `pharmacist.html`)
+- `worker_sarah` / `pass123` (Health Worker Portal: `healthworker.html`)
 
 ---
 
-## 8. Seed Accounts for Defense Demo
+## Folder structure
 
-The database includes pre-configured users with different access levels:
+```
+MediTrac/
+├─ README.md
+├─ .gitignore
+├─ .env.example
+├─ system_architecture.drawio   # Complete architecture, MVC & FEFO diagrams (5 tabs)
+├─ meditrac.drawio              # 16-table ER diagram & system diagrams
+├─ meditrac.png                 # Exported ER diagram preview
+├─ query.sql                    # 16-table DDL schema & constraints
+├─ insert_table.sql             # Seed data for demo accounts, inventory, and clinics
+├─ package.json
+├─ backend/
+│  ├─ server.js                 # Starts Express server & serves frontend pages
+│  ├─ config/
+│  │  └─ db.js                 # MySQL connection pool (mysql2/promise)
+│  ├─ controllers/             # *.controller.js: request/response + status codes
+│  │  ├─ authController.js
+│  │  ├─ dispensingController.js
+│  │  ├─ medicineController.js
+│  │  ├─ patientController.js
+│  │  └─ stationController.js
+│  ├─ models/                  # *.model.js: SQL queries + transactions
+│  │  ├─ authModel.js
+│  │  ├─ dispensingModel.js
+│  │  ├─ medicineModel.js
+│  │  ├─ patientModel.js
+│  │  └─ stationModel.js
+│  ├─ routes/                  # *.routes.js: URL → Controller handlers
+│  │  ├─ authRoutes.js
+│  │  ├─ dispensingRoutes.js
+│  │  ├─ medicineRoutes.js
+│  │  ├─ patientRoutes.js
+│  │  ├─ stationRoutes.js
+│  │  └─ announcementRoutes.js
+│  └─ utils/
+│     └─ response.js           # Standard response helpers: ok() and bad()
+├─ frontend/
+│  ├─ index.html               # Login gateway & role-based routing
+│  ├─ dashboard.html           # Admin: inventory CRUD, alert monitoring
+│  ├─ pharmacist.html          # Pharmacist: dispensing interface & distribution log
+│  ├─ healthworker.html        # Health Worker: read-only satellite stock viewer
+│  └─ css/
+│     └─ style.css             # Shared responsive CSS styling
+└─ utilities/
+   ├─ git-semantic-push.sh     # Commit helper script
+   └─ usefull_utility.md       # Git guidelines & cheat sheet
+```
 
-| Role | Username | Password | Default Redirect Page |
+---
+
+## API response format
+
+```json
+// Success response (200 OK / 201 Created)
+{
+  "success": true,
+  "message": "Dispensed successfully.",
+  "item": {
+    "record_id": 42,
+    "batch_id": 5,
+    "qty": 10
+  }
+}
+
+// Error response (400 / 401 / 404 / 409 / 500)
+{
+  "success": false,
+  "message": "Station, medicine batch, and quantity are required."
+}
+```
+
+**Status codes:**
+- `200 OK`: Request succeeded.
+- `201 Created`: Resource created (e.g. medicine added, dispensing logged).
+- `400 Bad Request`: Validation failure or missing required fields.
+- `401 Unauthorized`: Invalid credentials or unauthenticated session.
+- `404 Not Found`: Target ID or medicine does not exist.
+- `409 Conflict`: Insufficient inventory stock or expired batch requested.
+- `500 Server Error`: Database query or connection exception.
+
+---
+
+## Endpoints
+
+| Method | URL | Owner | Notes |
 | :--- | :--- | :--- | :--- |
-| **Administrator** | `admin_jane` | `pass123` | `/dashboard.html` |
-| **Pharmacist** | `pharma_john` | `pass123` | `/pharmacist.html` |
-| **Health Worker** | `worker_sarah` | `pass123` | `/healthworker.html` |
-
----
-
-## 9. Git Workflow & Defense Guidelines
-
-* **Main Protection**: No direct pushes to `main`. Every change is submitted via feature branches (`feature/<member>-<feature-name>`) and merged via Pull Request.
-* **Semantic Commits**: All commit messages strictly follow conventional commits (`feat:`, `fix:`, `refactor:`, `docs:`, `chore:`).
-* **Individual Code Defense**: Every member is prepared to walk through their owned tables, Models, Controllers, SQL joins, and live modify code on demand during the defense.
+| `POST` | `/login` | Raul | User authentication & role-based redirect (`index.html`) |
+| `GET` | `/api/announcements` | Raul | **INNER JOIN**: Announcements with Users (`posted_by`) |
+| `POST` | `/api/announcements` | Raul | Create announcement with validation (`title`, `body`) |
+| `DELETE` | `/api/announcements/:id` | Raul | Delete announcement by ID (with 404 check) |
+| `GET` | `/api/data` | TinZ | Retrieve all active medicines with batch details |
+| `GET` | `/api/data/:id` | TinZ | Retrieve single medicine by ID |
+| `POST` | `/api/data` | TinZ | Create new generic medicine and initial batch |
+| `PUT` | `/api/data/:id` | TinZ | Update medicine specifications |
+| `DELETE` | `/api/data/:id` | TinZ | Cascading transactional deletion of medicine |
+| `GET` | `/api/reports/full-outer-medicines` | TinZ | **FULL OUTER JOIN (UNION)**: Medicines & Batches |
+| `GET` | `/api/dispensing-options` | Fea | Dropdown options (stations, batches, patients) |
+| `GET` | `/api/dispensing-records` | Fea | Retrieve recent dispensing audit log |
+| `POST` | `/api/dispensing-records` | Fea | Dispense medicine; returns `400`/`409` on insufficient stock |
+| `GET` | `/api/barangay-summary` | Fea | **INNER JOIN**: Total medicine disbursements per station |
+| `GET` | `/api/patients` | Bulata | Retrieve all registered patients |
+| `GET` | `/api/patients/:id` | Bulata | Retrieve single patient record |
+| `POST` | `/api/patients` | Bulata | Register new patient demographic record |
+| `PUT` | `/api/patients/:id` | Bulata | Update patient demographic record |
+| `DELETE` | `/api/patients/:id` | Bulata | Delete patient record |
+| `GET` | `/api/health-stations` | Jero | Directory of satellite health stations |
+| `GET` | `/api/reports/right-join` | Bulata | **RIGHT JOIN**: All health stations & stationed batches |
+| `GET` | `/api/alerts` | TinZ | Active Low-Stock and Expiry alerts |
+| `POST` | `/api/alerts` | TinZ | Create manual inventory alert |
+| `PUT` | `/api/alerts/:id/resolve` | TinZ | Mark alert as resolved |
+| `DELETE` | `/api/alerts/:id` | TinZ | Delete alert record |
+| `GET` | `/api/fefo` | TinZ | **FEFO Prioritization**: Batches ordered by expiry ASC |
+| `GET` | `/api/joined-medicines` | TinZ | **INNER JOIN**: Medicines with Categories & Suppliers |
+| `GET` | `/api/reports/missing-batches` | TinZ | **LEFT JOIN**: Medicines with missing/zero batches |
