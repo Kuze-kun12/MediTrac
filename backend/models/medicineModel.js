@@ -1,15 +1,18 @@
 // =============================================================================
 // medicineModel.js - Medicine Inventory & SQL Join Reports Model
 // =============================================================================
-// Model Logic:
-// Runs pure SQL queries against MySQL to read, write, and join tables.
+// Purpose: Runs raw SQL queries in MySQL for medicines, batches, safety alerts,
+//          FEFO inventory, and all 4 types of SQL JOINs for the defense!
 // =============================================================================
 
+// Grab our database connection pool
 const db = require('../config/db');
 
-// Helper: Get ID of existing item by name, or insert it and get new ID
+// Helper function: Find the ID of an existing item (like category or health station),
+// or automatically insert it if it doesn't exist yet and return the new ID number!
 async function findOrCreate(table, idCol, nameCol, val, fallback = 'General') {
   const name = String(val || fallback).trim();
+  // Step 1: Check if this name is already in the lookup table
   const [rows] = await db.query(`SELECT ${idCol} FROM ${table} WHERE ${nameCol} = ?`, [name]);
   if (rows.length > 0) return rows[0][idCol];
 
@@ -30,12 +33,14 @@ async function findOrCreate(table, idCol, nameCol, val, fallback = 'General') {
     return res.insertId;
   }
 
+  // Generic insert for lookup tables like medicine_categories
   const [res] = await db.query(`INSERT INTO ${table} (${nameCol}) VALUES (?)`, [name]);
   return res.insertId;
 }
 
-// 1. READ: Get all medicines with category, batch, and station info
+// 1. READ: Get all medicines together with category, batch, and station info
 async function getAllMedicines() {
+  // Uses LEFT JOIN so medicines appear even if they haven't received a batch yet
   const sql = `
     SELECT
       m.medicine_id AS id,
@@ -59,7 +64,7 @@ async function getAllMedicines() {
   return rows;
 }
 
-// 1b. READ SINGLE: Get medicine by ID
+// 1b. READ SINGLE: Get details for just one medicine by its ID number
 async function getMedicineById(id) {
   const sql = `
     SELECT
@@ -88,11 +93,12 @@ async function getMedicineById(id) {
 
 // 2. CREATE: Add new generic medicine and its initial stock batch
 async function addMedicine(data) {
+  // Find or create category, station, and supplier IDs to link Foreign Keys
   const categoryId = await findOrCreate('medicine_categories', 'category_id', 'category_name', data.category || data.category_name);
   const stationId = await findOrCreate('health_stations', 'station_id', 'station_name', data.barangay, 'Central Health Center');
   const supplierId = data.supplier ? await findOrCreate('suppliers', 'supplier_id', 'supplier_name', data.supplier, 'MedPharma Global') : 1;
 
-  // Insert medicine header
+  // Step A: Insert medicine header info into medicines table
   const [med] = await db.query(
     'INSERT INTO medicines (generic_name, strength, dosage_form, unit, reorder_level, category_id) VALUES (?, ?, ?, ?, ?, ?)',
     [
@@ -105,7 +111,7 @@ async function addMedicine(data) {
     ]
   );
 
-  // Insert initial stock batch
+  // Step B: Insert the initial stock batch linked to this medicine_id!
   await db.query(
     'INSERT INTO medicine_batches (batch_no, medicine_id, supplier_id, station_id, expiry_date, qty_on_hand, unit_cost, received_date) VALUES (?, ?, ?, ?, ?, ?, ?, CURDATE())',
     [
@@ -122,15 +128,17 @@ async function addMedicine(data) {
   return { success: true, id: med.insertId };
 }
 
-// 3. UPDATE: Update medicine details and latest batch
+// 3. UPDATE: Update medicine details and latest batch info
 async function updateMedicine(id, data) {
   const medicineId = Number(id);
+  // Verify that the medicine exists first
   const [chk] = await db.query('SELECT medicine_id FROM medicines WHERE medicine_id = ?', [medicineId]);
   if (chk.length === 0) return { success: false, notFound: true };
 
   const categoryId = await findOrCreate('medicine_categories', 'category_id', 'category_name', data.category || data.category_name);
   const stationId = await findOrCreate('health_stations', 'station_id', 'station_name', data.barangay, 'Central Health Center');
 
+  // Step A: Update fields in medicines table
   await db.query(
     'UPDATE medicines SET generic_name=?, strength=?, dosage_form=?, unit=?, reorder_level=?, category_id=? WHERE medicine_id=?',
     [
@@ -144,6 +152,7 @@ async function updateMedicine(id, data) {
     ]
   );
 
+  // Step B: Update latest batch quantity, expiration date, and station
   await db.query(
     'UPDATE medicine_batches SET batch_no=?, expiry_date=?, qty_on_hand=?, station_id=? WHERE medicine_id=? ORDER BY batch_id DESC LIMIT 1',
     [
@@ -158,20 +167,23 @@ async function updateMedicine(id, data) {
   return { success: true };
 }
 
-// 4. DELETE: Safely remove a medicine and child records
+// 4. DELETE: Safely remove a medicine and child records without Foreign Key errors
 async function deleteMedicine(id) {
   const medicineId = Number(id);
   const [chk] = await db.query('SELECT medicine_id FROM medicines WHERE medicine_id = ?', [medicineId]);
   if (chk.length === 0) return { success: false, notFound: true };
 
+  // Cascade delete in child tables first:
   await db.query('DELETE FROM dispensing_items WHERE medicine_id = ?', [medicineId]);
   await db.query('DELETE FROM alerts WHERE medicine_id = ?', [medicineId]);
   await db.query('DELETE FROM medicine_batches WHERE medicine_id = ?', [medicineId]);
+  // Finally delete the parent medicine row:
   await db.query('DELETE FROM medicines WHERE medicine_id = ?', [medicineId]);
   return { success: true };
 }
 
-// 5. FEFO: Order batches by earliest expiration date first
+// 5. FEFO: First-Expiry-First-Out (Order batches by earliest expiration date first)
+// This is the core domain algorithm: prioritize dispensing batches expiring soonest!
 async function getFefoOrder() {
   const sql = `
     SELECT m.medicine_id, m.generic_name, b.batch_no, b.expiry_date, b.qty_on_hand
@@ -186,6 +198,8 @@ async function getFefoOrder() {
 
 // 6. ALERTS: Batches that are expired OR below safety reorder level
 async function getAlerts() {
+  // If expiry_date < CURDATE() -> EXPIRED!
+  // If qty_on_hand <= reorder_level -> LOW STOCK WARNING!
   const sql = `
     SELECT b.batch_id, b.batch_no, m.generic_name, b.expiry_date, b.qty_on_hand, m.reorder_level
     FROM medicine_batches b
@@ -201,7 +215,8 @@ async function getAlerts() {
 // REQUIRED SQL JOIN QUERIES (For DBMS 1 Defense)
 // =============================================================================
 
-// 7. INNER JOIN: Only returns rows where medicine has a matching category
+// 7. INNER JOIN: Only returns rows where a medicine has a matching category
+// (If a medicine has no category, it is excluded!)
 async function getMedicinesWithCategory() {
   const sql = `
     SELECT m.medicine_id AS id, m.generic_name, m.strength, c.category_name AS category
@@ -213,7 +228,8 @@ async function getMedicinesWithCategory() {
   return rows;
 }
 
-// 8. LEFT JOIN: Keeps all medicines; shows NULL if a medicine has no stock batch
+// 8. LEFT JOIN: Keeps all medicines; shows NULL if a medicine has no stock batch!
+// (Used to find medicines that are registered but have zero batches/stock)
 async function getMedicinesWithMissingBatch() {
   const sql = `
     SELECT m.medicine_id, m.generic_name, b.batch_id, b.batch_no
@@ -226,7 +242,8 @@ async function getMedicinesWithMissingBatch() {
   return rows;
 }
 
-// 9. RIGHT JOIN: Keeps all health stations; shows NULL if a station has no batches
+// 9. RIGHT JOIN: Keeps all health stations; shows NULL if a station has no batches!
+// (Used to audit health stations that have not been stocked yet)
 async function getStationsWithBatchesRightJoin() {
   const sql = `
     SELECT hs.station_id AS stationId, hs.station_name AS stationName, hs.address,
@@ -240,7 +257,8 @@ async function getStationsWithBatchesRightJoin() {
   return rows;
 }
 
-// 10. FULL OUTER JOIN: Keeps all medicines & batches (simulated with UNION in MySQL)
+// 10. FULL OUTER JOIN: Keeps all medicines & batches (Simulated with UNION in MySQL)
+// (MySQL does not have 'FULL OUTER JOIN' keyword, so we UNION a LEFT JOIN with a RIGHT JOIN)
 async function getMedicineFullOuterJoinSimulated() {
   const sql = `
     SELECT m.medicine_id AS id, m.generic_name AS medName, b.batch_no AS batchNo, b.qty_on_hand AS qtyOnHand, b.expiry_date AS expiry
@@ -257,6 +275,7 @@ async function getMedicineFullOuterJoinSimulated() {
 }
 
 // 11. ALERTS MANAGEMENT (CRUD)
+// Create a new safety warning alert record
 async function createAlert({ alert_type, medicine_id, batch_id }) {
   const [res] = await db.query(
     'INSERT INTO alerts (alert_type, medicine_id, batch_id, created_at) VALUES (?, ?, ?, NOW())',
@@ -265,18 +284,21 @@ async function createAlert({ alert_type, medicine_id, batch_id }) {
   return { id: res.insertId };
 }
 
+// Mark an alert as resolved (sets resolved_at timestamp to right now)
 async function resolveAlert(id) {
   const [res] = await db.query('UPDATE alerts SET resolved_at = NOW() WHERE alert_id = ?', [Number(id)]);
   if (res.affectedRows === 0) return { success: false, notFound: true };
   return { success: true };
 }
 
+// Delete / dismiss an alert permanently from MySQL
 async function deleteAlert(id) {
   const [res] = await db.query('DELETE FROM alerts WHERE alert_id = ?', [Number(id)]);
   if (res.affectedRows === 0) return { success: false, notFound: true };
   return { success: true };
 }
 
+// Export all medicine query functions
 module.exports = {
   getAllMedicines,
   getMedicineById,
@@ -293,3 +315,4 @@ module.exports = {
   getStationsWithBatchesRightJoin,
   getMedicineFullOuterJoinSimulated,
 };
+

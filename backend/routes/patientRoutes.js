@@ -1,11 +1,16 @@
 // =============================================================================
-// patientRoutes.js - Patient Routes (Complete CRUD)
+// patientRoutes.js - Patient Doorway (Complete CRUD: Create, Read, Update, Delete)
 // =============================================================================
-// Purpose: Maps patient endpoints (GET, POST, PUT, DELETE).
+// Purpose: Maps the URLs for managing patients in the clinic/barangay.
 // =============================================================================
 
+// Bring in Express to help us handle network requests
 const express = require('express');
+
+// Create the router map for all patient endpoints
 const router = express.Router();
+
+// Grab all our patient controller handlers
 const {
   getPatients,
   getPatientById,
@@ -14,19 +19,21 @@ const {
   deletePatientRecord,
 } = require('../controllers/patientController');
 
-// READ: GET /api/patients -> List all patients
+// 1. READ ALL: GET /api/patients -> Returns the list of all patients
 router.get('/api/patients', getPatients);
 
-// READ: GET /api/patients/:id -> Get single patient by ID
+// 2. READ ONE: GET /api/patients/:id -> Returns just one patient based on their ID number
 router.get('/api/patients/:id', getPatientById);
 
-// CREATE: POST /api/patients -> Add new patient
+// 3. CREATE: POST /api/patients -> Adds a brand new patient to the database
 router.post('/api/patients', createPatient);
 
-// UPDATE: PUT /api/patients/:id -> Update patient
+// 4. UPDATE: PUT /api/patients/:id -> Changes the information of an existing patient
 router.put('/api/patients/:id', updatePatientRecord);
 
-// DELETE: DELETE /api/patients/:id -> Remove patient
+// 5. DELETE: DELETE /api/patients/:id -> Permanently deletes a patient by their ID number
 router.delete('/api/patients/:id', deletePatientRecord);
 
+// Export this router so server.js can hook it up
 module.exports = router;
+

@@ -1,15 +1,18 @@
 // =============================================================================
-// patientModel.js - Patient Management Model (Complete CRUD)
+// patientModel.js - Patient Management Database Queries (Complete CRUD)
 // =============================================================================
 // Purpose: Handles database queries for Patients (Create, Read, Update, Delete).
 // =============================================================================
 
+// Grab our database connection pool
 const db = require('../config/db');
 
 /**
- * 1. READ: Get all patients from database
+ * 1. READ ALL: Get all patients from the database
  */
 async function getAllPatients() {
+  // Select ID, name, birthday, purok, and contact number
+  // ORDER BY patient_id DESC puts the newest registered patients first
   const sql = `
     SELECT 
       patient_id AS id,
@@ -25,9 +28,10 @@ async function getAllPatients() {
 }
 
 /**
- * 1b. READ SINGLE: Get patient by ID
+ * 1b. READ SINGLE: Get a single patient by their ID number
  */
 async function getPatientById(id) {
+  // Look up patient matching the specific ID number
   const sql = `
     SELECT 
       patient_id AS id,
@@ -40,13 +44,15 @@ async function getPatientById(id) {
     LIMIT 1
   `;
   const [rows] = await db.query(sql, [Number(id)]);
+  // If found, return the first row; otherwise return null
   return rows.length > 0 ? rows[0] : null;
 }
 
 /**
- * 2. CREATE: Add new patient record
+ * 2. CREATE: Add new patient record into MySQL
  */
 async function addPatient(data) {
+  // SQL INSERT: Put full name, birthday, purok, and phone number into columns
   const sql = `
     INSERT INTO patients (full_name, birthdate, purok, contact)
     VALUES (?, ?, ?, ?)
@@ -55,17 +61,19 @@ async function addPatient(data) {
     data.full_name || data.fullName,
     data.birthdate,
     data.purok,
-    data.contact || 'N/A',
+    data.contact || 'N/A', // Default to 'N/A' if they don't have a phone
   ];
 
   const [result] = await db.query(sql, values);
+  // Return the newly created patient_id number
   return { id: result.insertId };
 }
 
 /**
- * 3. UPDATE: Update existing patient by ID
+ * 3. UPDATE: Update an existing patient's details by their ID
  */
 async function updatePatient(id, data) {
+  // SQL UPDATE: Overwrite name, birthday, purok, and contact for the matching patient_id
   const sql = `
     UPDATE patients
     SET full_name = ?, birthdate = ?, purok = ?, contact = ?
@@ -80,19 +88,23 @@ async function updatePatient(id, data) {
   ];
 
   const [result] = await db.query(sql, values);
+  // If 0 rows were changed, that patient ID was not in the database
   if (result.affectedRows === 0) return { success: false, notFound: true };
   return { success: true };
 }
 
 /**
- * 4. DELETE: Remove patient by ID.
- * Clears related dispensing_items and dispensing_records first to avoid
- * foreign key constraint errors, then deletes the patient row.
+ * 4. DELETE: Remove patient by ID safely.
+ * Foreign Key Rule: If a patient has past medicine dispensings, MySQL won't let you delete them
+ * unless you delete their connected dispensing history first!
+ * Step A: Delete dispensing_items connected to this patient
+ * Step B: Delete dispensing_records connected to this patient
+ * Step C: Finally, safely delete the patient!
  */
 async function deletePatient(id) {
   const patientId = Number(id);
 
-  // Remove dispensing_items linked to this patient's dispensing_records
+  // Step A: Remove medicine items linked to this patient's dispensing records
   await db.query(
     `DELETE di FROM dispensing_items di
      JOIN dispensing_records dr ON dr.dispense_id = di.dispense_id
@@ -100,16 +112,17 @@ async function deletePatient(id) {
     [patientId]
   );
 
-  // Remove dispensing_records for this patient
+  // Step B: Remove the dispensing records header for this patient
   await db.query('DELETE FROM dispensing_records WHERE patient_id = ?', [patientId]);
 
-  // Now safely delete the patient
+  // Step C: Now safely delete the patient from the patients table!
   const sql = 'DELETE FROM patients WHERE patient_id = ?';
   const [result] = await db.query(sql, [patientId]);
   if (result.affectedRows === 0) return { success: false, notFound: true };
   return { success: true };
 }
 
+// Export all patient query functions
 module.exports = {
   getAllPatients,
   getPatientById,
@@ -117,3 +130,4 @@ module.exports = {
   updatePatient,
   deletePatient,
 };
+

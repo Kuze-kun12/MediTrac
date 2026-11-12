@@ -1,0 +1,522 @@
+
+Final Project: Plain-Language Guide 
+Courses: Database Management Systems 1 (DBMS 1) and Systems Integration and Architecture (SIA) 
+This is a simplified rewrite of the official final project.md . It does not replace the official guidelines. If the two ever disagree, the original wins. 
+Section 11 records the rulings on the points the official text left open. Items marked (suggested) are recommendations, not requirements: the suggested split, the weekly commit check, the defense timing, the suggested timeline, and the repository checklist. 
+1. The Big Picture 
+You build a software system with your group of 3 to 6 members. 
+You get graded mostly as an individual (90%) and a little as a group (10%). 
+Your Git history proves what you personally did. If you didn't commit it, it doesn't count. Every line you submit must be your own work, and you must be able to explain it at the defense. 
+2. Picking Your System 
+Stick to your approved title 
+Build what your instructor approved. 
+Want to change the topic or scope? Get written re-approval first. 
+Don't build a generic system 
+Plain CRUD apps (basic POS, basic online store, basic inventory, basic clinic log) won't get full credit. If your topic is a common one, you need at least one major feature that is specific to your domain. 
+What counts as a "major feature"? 
+Counts 
+Doesn't count
+Logic that solves a real domain problem 
+Dark mode / theme toggle
+Automated rules, calculations, or workflows 
+Search or filter bar
+Something that goes beyond entering and showing data 
+Basic sorting
+
+Export to PDF / CSV button
+
+
+Examples 
+Inventory: FIFO/FEFO batch tracking with automatic expiry handling, safety-stock alerts based on lead time, or reconciling transfers between branches.
+Page 1 of 13 
+E-commerce: escrow or milestone-based payments, tiered pricing by volume or customer type, or automatic dispute escalation. 
+Appointments / services: scheduling several resources with automatic conflict detection, queue triage with SLA timers, or a full audit trail through event sourcing. 
+Quick test: is your feature a major one? You should be able to answer "yes" to all four. 
+1. Does it apply business rules or calculations, instead of only storing and showing data? 2. Does the system do something on its own (an automatic check, alert, calculation, or status change)? 3. Can you demo it with sample data, a clear expected result, and one tricky edge case? 4. If you removed it, would the system look like any generic CRUD app? 
+3. Choose Your Track 
+
+Merged Track 
+Independent Track
+Who 
+Same members in both DBMS 1 and SIA 
+Different sections or different members
+Status 
+Recommended 
+Required for non-matching groups
+What you 
+build
+One combined system 
+Two separate projects
+DBMS 1 
+part
+10+ table database with SQL joins 
+Standalone app connected directly to the database
+SIA part 
+Node.js MVC backend with a REST API used by the frontend
+Separate web or mobile app with a Node.js MVC REST API and its own frontend
+
+
+Merged Track grading: one defense is graded for both courses, and the 90/10 weights apply to each course separately. 
+4. Technical Requirements 
+Track A: DBMS 1 (Database Focus) 
+Checklist 
+App connects directly to the database using a driver 
+Any language or platform (C#, Java, Python, PHP, desktop, web) 
+At least 10 tables 
+Primary keys and foreign keys enforced 
+Field validation in place 
+The app actually runs and shows these queries: 
+INNER JOIN : for example, transactions with their lookup tables 
+LEFT JOIN or RIGHT JOIN : for example, finding records with no match, or optional relationships FULL OUTER JOIN : or a UNION of left and right joins if your database lacks it (MySQL, for instance)
+Page 2 of 13 
+Track B: SIA (MVC and REST API Focus) 
+MVC, in plain words 
+Layer 
+Its job
+Model 
+Talks to the database, validates data, runs queries, holds business rules
+Controller 
+Receives requests, sends responses, sanitizes input, handles errors, hands work to Models
+View / Client 
+Separate frontend that talks to the backend using JSON
+
+
+Checklist 
+Backend in Node.js (for example Express) with /models , /controllers , /routes folders Frontend in any tech (React, Vue, Flutter, React Native, plain HTML/JS) 
+The frontend really uses all four method types: 
+GET : list, get by ID, reports across multiple tables 
+POST : create, with validation 
+PUT / PATCH : full or partial update 
+DELETE : delete or audited soft-delete 
+Correct status codes: 200 , 201 , 400 , 401/403 , 404 , 500 
+Consistent JSON format for success and error responses 
+Frontend shows loading and error feedback 
+5. Teams of 3 to 6: Scope and Work Split 
+The official guidelines don't say how the workload changes with team size. It does: a team of 3 and a team of 6 don't carry the same load, and every member still has to defend their own work. The scope below applies to every group. 
+Independent Track: the two projects can have different rosters. Apply this section separately to each project. 
+5.1 Scope by group size 
+Every member carries roughly 3 tables. The minimum grows by 2 tables for each member beyond 3: 10 + 2 x (members - 3) .
+Group size 
+Min. tables 
+Join reports 
+Complete resources 
+Unique feature
+3 
+10 
+3 
+3 
+1 major feature
+4 
+12 
+4 
+4 
+1 major feature
+5 
+14 
+5 
+5 
+1 major feature, split between 2 owners
+6 
+16 
+6 
+6 
+1 major feature, split between 2 owners
+
+
+Page 3 of 13 
+Join reports: report screens or endpoints that run a join. Across the group, INNER , LEFT/RIGHT , and FULL OUTER must each appear at least once. In the Merged Track, write the join in the Model and expose it as a GET report endpoint. One piece of code then serves both courses. 
+Complete resources: an entity with working GET , POST , PUT/PATCH , and DELETE through Model, Controller, and Route, used by the frontend. (DBMS 1-only teams: a full form or screen with create, read, update, and delete.) 
+Real tables only: each table must be a real entity with real relationships. Padding the schema to hit the number won't survive the question "why does this table exist?" 
+At any group size, every member owns at least: 
+2 tables 
+1 complete resource 
+1 join report 
+1 frontend screen that uses their own endpoints 
+5.2 Own a slice, not a layer 
+Split the work by feature area, not by layer. If one person writes all the Models and another builds all the screens, the screen builder can't explain SQL joins or MVC at the defense, and the Model writer can't show anything working. 
+Each member takes a feature area end to end: tables, Model, Controller, Route, a frontend screen, and a join report. 
+The group chooses who covers which MVC layers and which join types. The instructor does not assign them. Decide it inside your slices, make sure all three join types are covered, and record the choice in the ownership matrix (5.4). 
+Everyone writes code. A member who only does documentation, testing, or slides leaves no authored modules to defend, and the individual grade is built on authored code. 
+5.3 Suggested split 
+Almost every system has these six feature areas in some form:
+Area 
+What it covers
+Core 
+Users, roles, login, shared layout, database setup
+Master data 
+Lookup and reference tables (categories, branches, statuses)
+Transactions 
+The central business records (orders, bookings, requests)
+Unique feature 
+The rules and logic behind your major feature
+Reports 
+Join-based reports, summaries, dashboard
+Audit 
+Activity log, status history, alerts
+
+
+Page 4 of 13 
+One way to divide the areas by group size (A, B, C, and so on stand for the members): 
+Group 
+size
+Who takes what
+3 
+A: Core, Master data, Reports; B: Transactions, Audit; C: Unique feature
+4 
+A: Core, Master data; B: Transactions; C: Unique feature; D: Reports, Audit
+5 
+A: Core, Master data; B: Transactions; C: Unique feature (rules); D: Unique feature (workflow, alerts), Audit; E: Reports
+6 
+A: Core; B: Master data; C: Transactions; D: Unique feature (rules); E: Unique feature (workflow, alerts), Audit; F: Reports
+
+
+Your group may divide the areas differently, as long as the per-member minimums in 5.1 hold. Bigger teams split the biggest area, the unique feature, instead of cutting thinner slices. When two people share it, each must still be able to explain the whole feature at a high level. 
+5.4 Ownership matrix 
+Commit this table to your README in week 1 and update it when things change. Because the group chooses its own layers and join types, this matrix is the record of who owns what. It is also your cheat sheet at the defense and a map of who did what for the grader. 
+Member 
+GitHub username 
+Tables 
+Endpoints / screens 
+Join report(s) and join type 
+Feature role
+
+
+
+
+
+
+
+
+5.5 Everyone knows the big picture 
+Owning a slice is not a reason to ignore the rest. Every member should be able to explain, in about two minutes: 
+The ER diagram 
+How one request travels: screen, route, controller, model, database, and back 
+What the unique feature does and why it counts as major 
+5.6 Watch-outs by group size
+Group 
+size
+Main risk 
+What helps
+3 
+Heaviest load per person; one 
+absence stalls the project
+Pick a feature you can actually finish; share knowledge early
+4 
+Reports and Audit get pushed to the last week
+Hold a mid-project demo where every slice must run
+5 
+More merge conflicts 
+Agree on who owns which files; pull from main every day
+6 
+Thin slices and passengers 
+Check the per-member minimums; rotate PR reviewers; run the weekly commit check (Section 6)
+
+
+Page 5 of 13 
+6. Git Rules (This Decides Your Grade) 
+Repository on GitHub, public or accessible to the instructor. 
+Your Git history is the main evidence for your 90% individual grade. 
+Do 
+Commit from your own GitHub account 
+Commit often, in small steps, throughout the project 
+Write meaningful messages ( feat: add batch expiry check , not update ) 
+Use feature branches and pull requests 
+Avoid (severe deductions) 
+One big upload near the deadline 
+All commits coming from one person 
+Commits made by someone else on your behalf 
+Inactive members 
+A member who is inactive receives an automatic score of 0. Your Git history is the evidence, so use the weekly commit check below to catch problems early. 
+What is not counted 
+These do not count toward your Git contribution: 
+Squash-merged pull requests 
+Co-authored-by credit for pair-programmed work 
+Commits made by editing files in the GitHub web editor 
+Team workflow 
+Protect main . Nobody pushes straight to it; everything goes through a pull request. Rotate reviewers. Someone other than the author reviews each PR, ideally a different person each time. 
+Name branches by owner and purpose, such as feature/ana-batch-expiry . 
+Use semantic commit prefixes: feat: , fix: , refactor: , docs: . 
+Check your Git identity. Run git config user.email and make sure it's an email linked to your own GitHub account. Otherwise your commits may not show up as yours. On a lab PC or borrowed laptop, check it before every session. 
+Commit from your own machine, not the GitHub web editor. Write your code in a local clone, commit there, and push. 
+Pair programming is fine, but take turns committing. Co-authored-by lines are not counted, so each person needs commits of their own. 
+Merge with a regular merge commit, never a squash. Squashing turns a branch of small commits into one commit on main , and squash-merged PRs are not counted. Choose "Create a merge commit" when you merge a PR.
+Page 6 of 13 
+Don't force-push shared branches. It breaks teammates' work and can erase commit evidence. The instructor takes a snapshot of your repository at the deadline. You don't need to create a tag or a release. Push and merge everything you want graded into main before the deadline. 
+Weekly commit check (suggested) 
+Once a week, on an up-to-date main , run git shortlog -sne --no-merges HEAD . It lists commits per author. An even share is 100% divided by the number of members, and anyone under half of that is a red flag worth fixing early. 
+Group size 
+Even share 
+Red flag (below half)
+3 
+33% 
+under 17%
+4 
+25% 
+under 13%
+5 
+20% 
+under 10%
+6 
+17% 
+under 8%
+
+
+Commit counts are a rough signal, not the grade. A few solid commits beat many tiny ones, and a grader will look at what actually changed. Slices also differ in size, so treat this as a prompt to talk, not a verdict. 
+7. How You Are Graded 
+Official weights 
+Component 
+Weight
+Individual Technical Assessment 
+90%
+Group Presentation and System Cohesion 
+10%
+
+
+In the Merged Track, one defense is graded for both courses, and the 90/10 weights apply to each course separately. 
+Individual (90%): what you are judged on 
+1. Your code contribution, shown by Git logs 
+2. A live defense of the code you wrote 
+3. Explaining your assigned MVC layers and SQL joins (the ones your group assigned to you) 4. Answering questions 
+Group (10%): what you are judged on 
+1. The system is functionally complete 
+2. The unique major feature is demonstrated 
+3. UI/UX polish 
+4. Client and server work together smoothly 
+5. The group presentation is organized
+Page 7 of 13 
+Scoring breakdown (sub-points) 
+The official text gives the 90/10 split and the focus areas. The sub-points below divide them, and they add up to 100. 
+Individual: 90 points 
+Criterion 
+Points 
+What earns full marks
+Git contribution 
+30 
+Your own account, steady commits across the whole project, clear messages, branches and PRs, a fair share of the work
+Live code defense 
+25 
+You explain your own modules line by line and can change or trace them on the spot
+MVC and SQL 
+explanation
+20 
+You explain the MVC layers and joins your group assigned to you (Model / Controller / Route; INNER, LEFT/RIGHT, FULL OUTER), and why you used them
+Individual Q&A 
+15 
+Clear, correct answers to questions about design, normalization, status codes, and similar topics
+Total 
+90
+
+
+
+Group: 10 points 
+Criterion 
+Points 
+What earns full marks
+Functional completeness 
+3 
+Core features work end to end with no crashes during the demo
+Unique major feature 
+3 
+A real domain-specific feature, shown working, beyond CRUD
+UI/UX polish 
+2 
+Clean, consistent, easy to use
+Client-server integration 
+1 
+The frontend consumes the API smoothly, with loading and error states
+Presentation delivery 
+1 
+Organized, on time, every member takes part
+Total 
+10
+
+
+
+Overall: 100 points 
+Part 
+Points
+Individual 
+90
+Group 
+10
+Final 
+100
+
+
+Reading the rubric: the group portion is small. Two things decide most of your grade: how well you can defend your own work and how clearly your Git history shows it. A polished app can't make up for not understanding your own code.
+Page 8 of 13 
+Individual points vs. group points 
+Individual points (90) are yours alone. They don't move because a teammate did better or worse. Group points (10) are shared, so everyone in the group starts from the same group score. The exception is an inactive member, who receives an automatic score of 0 (Section 6). Group size doesn't change the point values. That is why Section 5 sets a minimum footprint per member: it keeps the 90 individual points equally reachable in a team of 3 and a team of 6. 
+Performance levels 
+Apply these levels to each individual criterion above. 
+Level 
+Share of the criterion's points
+What it looks like
+Excellent 
+90-100% 
+Explains everything in their own slice, handles follow-ups, and makes a live change without help
+Good 
+75-89% 
+Explains most of it with small gaps; needs a hint for a live change
+Fair 
+50-74% 
+Knows what the code does but not why; struggles with follow-ups
+Poor 
+below 50% 
+Can't explain their own code, or the Git history doesn't support the work they claim
+
+
+Worked example
+Criterion 
+Level 
+Score
+Git contribution 
+Good 
+24 / 30
+Live code defense 
+Excellent 
+23 / 25
+MVC and SQL explanation 
+Good 
+16 / 20
+Individual Q&A 
+Fair 
+9 / 15
+Individual subtotal 
+
+72 / 90
+Group score (same for everyone) 
+
+8 / 10
+Final 
+
+80 / 100
+
+
+Page 9 of 13 
+8. Defense Day (Time and Format by Group Size) 
+Suggested time per group 
+The group demo covers the 10% group portion. Then each member has their own short defense: about 5 minutes walking through their own code and about 5 minutes of questions. In the Merged Track, this one defense is graded for both courses. 
+Group size 
+Group demo 
+Individual defenses (about 10 min each) 
+Total, with changeovers
+3 
+12 min 
+30 min 
+about 45 min
+4 
+12 min 
+40 min 
+about 55 min
+5 
+12 min 
+50 min 
+about 65 min
+6 
+12 min 
+60 min 
+about 75 min
+
+
+What to expect 
+A random file or line is picked and the question is "who wrote this?" (expect git blame ). You explain it line by line, including why it was written that way. 
+You're asked to make a small live change: add a field, change a join, return a different status code. You may be asked how your slice connects to a teammate's. 
+Demo script for the group portion 
+1. Log in and show the main flow (Transactions). 
+2. Run the unique feature, including one tricky edge case. 
+3. Show the join reports ( INNER , LEFT/RIGHT , FULL OUTER ). 
+4. Show the API behind one screen, using the browser's network tab or Postman. 
+5. Close with the ER diagram and the MVC structure in about a minute. 
+Let each member drive the part that belongs to their slice, so the whole group speaks. Seed realistic data and do a full dry run before the day, and keep a plan B (local copy, screenshots) in case the network or database fails.
+Page 10 of 13 
+9. Self-Checklist Per Member 
+Before the defense, be able to answer yes to each of these. 
+My commits are on my own account and spread across the project timeline 
+I made my commits from my own machine, not in the GitHub web editor, and my PRs were merged with a regular merge commit (no squash) 
+I opened or merged at least one pull request 
+Every line I submitted is my own work (no AI-generated code, tutorial code, or templates), and I can open any file I wrote and explain every line 
+I can explain the MVC layers and SQL joins my group assigned to me, without notes I can explain the schema 
+I can explain the unique major feature and point to the code behind it 
+I'm listed in the ownership matrix with my tables, endpoints, and join report 
+I reviewed at least one teammate's pull request 
+I can explain the whole request flow and the ER diagram in two minutes, not only my own slice 
+10. Deadlines and Registration 
+What 
+When
+Topic registration (if not yet done) 
+Next class session
+Final code submission 
+Exactly 1 week before Final Exam Week
+
+
+Registration: write on a 1/4 sheet of paper: 
+1. Group members 
+2. Section 
+3. Proposed system title 
+4. Your intended unique major feature 
+Code deadline: the repository gets locked. Commits pushed after the deadline won't be credited during your defense. The instructor takes their own snapshot of your repository at the deadline, so you don't need to create a tag or a release.
+Page 11 of 13 
+Suggested timeline 
+Counted back from the code deadline. If you have fewer weeks, shrink each step proportionally. 
+When 
+Goal
+8 weeks before 
+Title approved, ER diagram drafted, ownership matrix committed, repo created with main protected
+7 to 5 weeks 
+before
+Every member's tables, Models, and basic CRUD working on their own branch
+4 to 3 weeks 
+before
+Unique feature and join reports working end to end; mid-project demo where every slice runs
+2 weeks before 
+Frontend polish, error handling, status codes, realistic seed data
+1 week before 
+Feature freeze, bug fixes only; README finished
+Deadline 
+Repository locked; instructor takes the snapshot
+
+
+Repository checklist (suggested) 
+README with the group roster, the ownership matrix, and how to run the project 
+SQL script for the schema and seed data 
+ER diagram 
+List of API endpoints (a table or a Postman collection), for SIA 
+.env.example with placeholder values, and no real passwords or keys committed
+Page 12 of 13 
+11. Rulings on the Open Points 
+The official guidelines left these points open. They are now settled.
+# 
+Point 
+Ruling
+1 
+Scope by group size
+Yes, it changes. The 10-table minimum and everything else in Section 5 scale with 3, 4, 5, or 6 members.
+2 
+Point 
+breakdown
+The sub-points in Section 7 are the breakdown under the official 90/10 weights.
+3 
+Merged Track 
+One defense is graded for both courses. The 90/10 weights apply to each course separately.
+4 
+Assigned layers 
+The group chooses who covers which MVC layers and join types. Record the choice in the ownership matrix (5.4).
+5 
+Counting 
+commits
+Squash-merged PRs, pair-programmed work credited through Co-authored-by , and commits made in the GitHub web editor are not counted.
+6 
+Inactive 
+members
+An inactive member receives an automatic score of 0.
+7 
+AI tools and 
+outside code
+Not allowed: AI coding assistants, tutorials, and templates. Every submitted line must be your own and explainable at the defense. Installing standard libraries and frameworks (for example Express, React, or a database driver) is fine.
+8 
+Repository lock 
+The instructor takes their own snapshot of the repository at the deadline. No tag or release is needed.
+
+
+Page 13 of 13 
