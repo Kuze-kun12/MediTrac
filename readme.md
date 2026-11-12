@@ -10,22 +10,27 @@ A web system for managing medicine inventory and patient dispensing across munic
 
 ## Group roster and ownership matrix
 
-| Member | GitHub username | Tables | Endpoints / screens | Join report and join type | Feature role |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Raul A. Generoso III** | `Kuze-kun12` | `users`, `roles`, `announcements` | `POST /login`, `GET/POST/DELETE /api/announcements`; `index.html`, `dashboard.html` | announcements + users: **INNER** | Core Authentication & Announcements |
-| **Fea Ann Villarba** | `feaann` | `dispensing_records`, `dispensing_items` | `GET /api/dispensing-options`, `GET/POST /api/dispensing-records`, `GET /api/barangay-summary`; `pharmacist.html` | dispensing details: **INNER** | Dispensing Transactions |
-| **TinZ** | `TinZ` | `medicines`, `medicine_batches`, `stock_movements` | `GET/POST/PUT/DELETE /api/data`, `GET /api/reports/full-outer-medicines`; `dashboard.html` | medicines + batches: **FULL OUTER (UNION)** | Medicine Inventory & Batch Management |
-| **Xian Xavier** | `xianxavier` | `patients`, `health_stations` | `GET/POST/PUT/DELETE /api/patients`, `GET /api/health-stations`, `GET /api/reports/right-join`; `pharmacist.html`, `dashboard.html` | health stations + batches: **RIGHT** | Patient Records & Health Station Directory |
-| **Jero Erwin Lombrio** | `zezktokam69` | `stations`, `station_inventory` | `GET/POST/PUT/DELETE /api/stations`, `GET /api/station-summary`; `healthworker.html` | station inventory details: **INNER** | Station Management |
+| Member | GitHub username | Tables | Endpoints | Feature role |
+| :--- | :--- | :--- | :--- | :--- |
+| **Raul A. Generoso III** | `Kuze-kun12` | `users`, `roles`, `announcements` | `POST /login`, `GET/POST/DELETE /api/announcements` | Core Authentication + Announcements; shared frontend owner |
+| **Fea Ann Villarba** | `feaann` | `dispensing_records`, `dispensing_items` | `GET /api/dispensing-options`, `GET /api/dispensing-records`, `POST /api/dispensing-records`, `GET /api/barangay-summary` | Dispensing Transactions |
+| **Tinio** | `TinZ` | `medicines`, `medicine_batches`, `stock_movements` | `GET /api/data`, `POST /api/data`, `PUT /api/data/:id`, `DELETE /api/data/:id`, `GET /api/alerts`, `GET /api/fefo`, `GET /api/joined-medicines`, `GET /api/reports/missing-batches`, `GET /api/reports/full-outer-medicines` | Medicine Inventory & Batch Management |
+| **Bulata** | `bulata` | `patients`, `health_stations` | `GET /api/patients`, `GET /api/patients/:id`, `POST /api/patients`, `PUT /api/patients/:id`, `DELETE /api/patients/:id`, `GET /api/health-stations`, `GET /api/reports/right-join` | Patient Records & Health Station Directory |
+| **Jero** | `zezktokam69` | `stations` | `GET /api/health-stations` | Station Management |
+| **Remollo** | `ermico-remollo` | `database schema`, `ERD design`, `entity relationships` | `schema`, `query.sql`, `insert_table.sql`, `meditrac.drawio` | Database Design & ER Diagram |
+| **Janio** | `lea-janio` | `database schema`, `ERD design`, `entity relationships` | `schema`, `query.sql`, `insert_table.sql`, `meditrac.drawio` | Database Design & ER Diagram |
 
-**Total:** 5 assigned feature slices.  
-**Core responsibility:** Raul owns the overall system core, authentication, and announcement endpoints with frontend support. 
+**Total:** 7 assigned feature slices.  
+**Core responsibility:** Raul owns the system core, authentication, announcement endpoints, and the shared frontend across the project.  
 **Ownership per module:**
-- `authModel.js` + authentication flow + announcements = Raul
-- `dispensingController.js` + `dispensingModel.js` + routes = Fea
-- `medicineController.js` + `medicineModel.js` + routes = TinZ
-- `patientController.js` + `patientModel.js` + routes = Xian Xavier
-- `stationController.js` + `stationModel.js` + routes = Jero
+- `authModel.js` + authentication flow + `announcementRoutes.js` = Raul
+- `dispensingController.js` + `dispensingModel.js` + `dispensingRoutes.js` = Fea
+- `medicineController.js` + `medicineModel.js` + `medicineRoutes.js` = TinZ
+- `patientController.js` + `patientModel.js` + `patientRoutes.js` = Bulata
+- `stationController.js` + `stationModel.js` + `stationRoutes.js` = Jero
+- `query.sql` + `insert_table.sql` + ER diagram design = Ermico Remollo + Lea Janio
+
+**Frontend note:** All UI pages are created and maintained by Raul, while backend modules remain assigned to their respective team members.
 
 ---
 
@@ -189,31 +194,31 @@ MediTrac/
 
 | Method | URL | Owner | Notes |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/login` | A | User authentication & role-based redirect (`index.html`) |
-| `GET` | `/api/announcements` | A | **INNER JOIN**: Announcements with Users (`posted_by`) |
-| `POST` | `/api/announcements` | A | Create announcement with validation (`title`, `body`) |
-| `DELETE` | `/api/announcements/:id` | A | Delete announcement by ID (with 404 check) |
-| `GET` | `/api/data` | B | Retrieve all active medicines with batch details |
-| `GET` | `/api/data/:id` | B | Retrieve single medicine by ID |
-| `POST` | `/api/data` | B | Create new generic medicine and initial batch |
-| `PUT` | `/api/data/:id` | B | Update medicine specifications |
-| `DELETE` | `/api/data/:id` | B | Cascading transactional deletion of medicine |
-| `GET` | `/api/reports/full-outer-medicines` | B | **FULL OUTER JOIN (UNION)**: Medicines & Batches |
-| `GET` | `/api/dispensing-options` | C | Dropdown options (stations, batches, patients) |
-| `GET` | `/api/dispensing-records` | C | Retrieve recent dispensing audit log |
-| `POST` | `/api/dispensing-records` | C | Dispense medicine; returns `400`/`409` on insufficient stock |
-| `GET` | `/api/barangay-summary` | C | **INNER JOIN**: Total medicine disbursements per station |
-| `GET` | `/api/patients` | D | Retrieve all registered patients |
-| `GET` | `/api/patients/:id` | D | Retrieve single patient record |
-| `POST` | `/api/patients` | D | Register new patient demographic record |
-| `PUT` | `/api/patients/:id` | D | Update patient demographic record |
-| `DELETE` | `/api/patients/:id` | D | Delete patient record |
-| `GET` | `/api/health-stations` | D | Directory of satellite health stations |
-| `GET` | `/api/reports/right-join` | D | **RIGHT JOIN**: All health stations & stationed batches |
-| `GET` | `/api/alerts` | E | Active Low-Stock and Expiry alerts |
-| `POST` | `/api/alerts` | E | Create manual inventory alert |
-| `PUT` | `/api/alerts/:id/resolve` | E | Mark alert as resolved |
-| `DELETE` | `/api/alerts/:id` | E | Delete alert record |
-| `GET` | `/api/fefo` | E | **FEFO Prioritization**: Batches ordered by expiry ASC |
-| `GET` | `/api/joined-medicines` | E | **INNER JOIN**: Medicines with Categories & Suppliers |
-| `GET` | `/api/reports/missing-batches` | E | **LEFT JOIN**: Medicines with missing/zero batches |
+| `POST` | `/login` | Raul | User authentication & role-based redirect (`index.html`) |
+| `GET` | `/api/announcements` | Raul | **INNER JOIN**: Announcements with Users (`posted_by`) |
+| `POST` | `/api/announcements` | Raul | Create announcement with validation (`title`, `body`) |
+| `DELETE` | `/api/announcements/:id` | Raul | Delete announcement by ID (with 404 check) |
+| `GET` | `/api/data` | TinZ | Retrieve all active medicines with batch details |
+| `GET` | `/api/data/:id` | TinZ | Retrieve single medicine by ID |
+| `POST` | `/api/data` | TinZ | Create new generic medicine and initial batch |
+| `PUT` | `/api/data/:id` | TinZ | Update medicine specifications |
+| `DELETE` | `/api/data/:id` | TinZ | Cascading transactional deletion of medicine |
+| `GET` | `/api/reports/full-outer-medicines` | TinZ | **FULL OUTER JOIN (UNION)**: Medicines & Batches |
+| `GET` | `/api/dispensing-options` | Fea | Dropdown options (stations, batches, patients) |
+| `GET` | `/api/dispensing-records` | Fea | Retrieve recent dispensing audit log |
+| `POST` | `/api/dispensing-records` | Fea | Dispense medicine; returns `400`/`409` on insufficient stock |
+| `GET` | `/api/barangay-summary` | Fea | **INNER JOIN**: Total medicine disbursements per station |
+| `GET` | `/api/patients` | Bulata | Retrieve all registered patients |
+| `GET` | `/api/patients/:id` | Bulata | Retrieve single patient record |
+| `POST` | `/api/patients` | Bulata | Register new patient demographic record |
+| `PUT` | `/api/patients/:id` | Bulata | Update patient demographic record |
+| `DELETE` | `/api/patients/:id` | Bulata | Delete patient record |
+| `GET` | `/api/health-stations` | Jero | Directory of satellite health stations |
+| `GET` | `/api/reports/right-join` | Bulata | **RIGHT JOIN**: All health stations & stationed batches |
+| `GET` | `/api/alerts` | TinZ | Active Low-Stock and Expiry alerts |
+| `POST` | `/api/alerts` | TinZ | Create manual inventory alert |
+| `PUT` | `/api/alerts/:id/resolve` | TinZ | Mark alert as resolved |
+| `DELETE` | `/api/alerts/:id` | TinZ | Delete alert record |
+| `GET` | `/api/fefo` | TinZ | **FEFO Prioritization**: Batches ordered by expiry ASC |
+| `GET` | `/api/joined-medicines` | TinZ | **INNER JOIN**: Medicines with Categories & Suppliers |
+| `GET` | `/api/reports/missing-batches` | TinZ | **LEFT JOIN**: Medicines with missing/zero batches |
